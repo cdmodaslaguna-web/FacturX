@@ -43,7 +43,7 @@ export default function AppBottomNav({ view, setView, clearEdit }) {
         <div className="nav-center-cutout">
           <motion.button 
             className="fab-main"
-            onClick={() => handleNav('form')}
+            onClick={() => handleNav(view === 'form' ? 'list' : 'form')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             animate={{ 

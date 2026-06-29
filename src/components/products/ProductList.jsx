@@ -144,19 +144,19 @@ export default function ProductList() {
       </div>
       
       <form className="product-form" onSubmit={handleSubmit} style={{ background: '#fff', padding: '20px', borderRadius: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
-        <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+        <div className="product-form-row">
           <div className="form-group">
-            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block' }}>Nombre del Producto</label>
+            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Producto</label>
             <input required value={form.name} onChange={e => handleChange('name', e.target.value)} placeholder="Ej. Camisa" style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block' }}>Variante/Talla</label>
+            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Variante o Talla</label>
             <input value={form.variant} onChange={e => handleChange('variant', e.target.value)} placeholder="Ej. S, M, L" style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
           </div>
         </div>
-        <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+        <div className="product-form-row">
           <div className="form-group">
-            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block' }}>Categoría</label>
+            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Categoría</label>
             <select value={form.category} onChange={e => handleChange('category', e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }}>
               {CATEGORIES.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.label}</option>
@@ -164,11 +164,11 @@ export default function ProductList() {
             </select>
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block' }}>Precio (Vacío = variable)</label>
-            <input type="number" min="0" step="0.01" value={form.price} onChange={e => handleChange('price', e.target.value)} placeholder="Ej. 15000" style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
+            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Precio</label>
+            <input type="number" min="0" step="0.01" value={form.price} onChange={e => handleChange('price', e.target.value)} placeholder="Opcional (Ej. 15000)" style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block' }}>Foto (Cloudinary)</label>
+            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Foto</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} style={{ display: 'none' }} />
               <button type="button" onClick={() => fileInputRef.current?.click()} style={{ background: '#f1f5f9', color: '#3b82f6', border: 'none', borderRadius: '12px', padding: '10px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }} disabled={isUploading}>
@@ -183,19 +183,14 @@ export default function ProductList() {
         </div>
         
         <div className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px', marginBottom: '20px' }}>
-          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '0.85rem', color: '#4b5563', fontWeight: 'bold' }}>Descripción (Para el catálogo público)</label>
-            <textarea 
-              value={form.description}
-              onChange={e => handleChange('description', e.target.value)}
-              placeholder="Ej. Tela de algodón, ideal para eventos de gala. Incluye accesorios..."
-              style={{ padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', width: '100%', minHeight: '80px', fontFamily: 'inherit', outline: 'none' }}
-            />
+          <div className="form-group" style={{ marginBottom: '20px' }}>
+            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Descripción</label>
+            <textarea value={form.description} onChange={e => handleChange('description', e.target.value)} placeholder="Breve descripción para el catálogo público..." style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none', minHeight: '80px', resize: 'vertical' }} />
           </div>
         </div>
 
         <div className="form-actions" style={{ display: 'flex', gap: '12px' }}>
-          <button type="submit" className="btn btn-primary" style={{ padding: '10px 24px', borderRadius: '40px', background: '#184a2c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>{editingId ? 'Actualizar Producto' : 'Agregar Producto'}</button>
+          <button type="submit" className="btn btn-primary" style={{ padding: '10px 24px', borderRadius: '40px', background: '#184a2c', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>{editingId ? 'Actualizar' : 'Agregar'}</button>
           {editingId && <button type="button" className="btn btn-secondary" onClick={handleCancel} style={{ padding: '10px 24px', borderRadius: '40px', background: '#e2e8f0', color: '#4b5563', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Cancelar</button>}
         </div>
       </form>
@@ -242,7 +237,7 @@ export default function ProductList() {
                 <td>{CATEGORIES.find(c => c.id === product.category)?.label || product.category}</td>
                 <td>{product.name}</td>
                 <td>{product.variant || '-'}</td>
-                <td>{product.price !== null ? `$${product.price.toFixed(2)}` : 'Variable'}</td>
+                <td>{product.price !== null ? `$${product.price.toLocaleString('es-CO')}` : 'Variable'}</td>
                 <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <button className="btn-icon btn-edit" onClick={() => handleEdit(product)} title="Editar" style={{ background: '#f1f5f9', color: '#3b82f6', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', display: 'flex' }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>

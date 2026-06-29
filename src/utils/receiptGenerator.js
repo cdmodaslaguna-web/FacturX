@@ -129,7 +129,7 @@ export const doDownloadReceiptImage = async (data, amountPaid, hasShipping, ship
   const link = document.createElement('a');
   link.href = imgData;
   const docId = data.id || data.orderId || 'S/N';
-  link.download = `Comprobante_FacturX_${docId.slice(0, 8)}.jpg`;
+  link.download = `Comprobante_EsperanzaLaguna_${docId.slice(0, 8)}.jpg`;
   link.click();
   toast.success("¡La imagen se ha descargado correctamente!");
 };
@@ -160,7 +160,7 @@ export const doSendReceiptViaWhatsApp = async (data, amountPaid, hasShipping, sh
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
         ]);
-        let text = `🧾 *${title.toUpperCase()}*%0A*FacturX*%0A%0A`;
+        let text = `🧾 *${title.toUpperCase()}*%0A*Casa de Modas Esperanza Laguna*%0A%0A`;
         text += `¡Hola ${customerName}! Te enviamos el comprobante por *${formatPrice(amountPaid)}*.%0A`;
         if (balance > 0) text += `Tu saldo pendiente es de *${formatPrice(balance)}*.%0A%0A`;
         else text += `*¡Tu cuenta está totalmente saldada!*%0A%0A`;
@@ -171,7 +171,7 @@ export const doSendReceiptViaWhatsApp = async (data, amountPaid, hasShipping, sh
         }, 1500);
       } catch (err) {
         console.error("Error al copiar:", err);
-        let text = `🧾 *${title.toUpperCase()}*%0A*FacturX*%0A%0A`;
+        let text = `🧾 *${title.toUpperCase()}*%0A*Casa de Modas Esperanza Laguna*%0A%0A`;
         text += `¡Hola ${customerName}! Te enviamos el comprobante por *${formatPrice(amountPaid)}*.%0A`;
         if (balance > 0) text += `Tu saldo pendiente es de *${formatPrice(balance)}*.%0A%0A`;
         else text += `*¡Tu cuenta está totalmente saldada!*%0A%0A`;
@@ -180,7 +180,7 @@ export const doSendReceiptViaWhatsApp = async (data, amountPaid, hasShipping, sh
       }
     }, 'image/png');
   } else {
-    let text = `🧾 *${title.toUpperCase()}*%0A*FacturX*%0A%0A`;
+    let text = `🧾 *${title.toUpperCase()}*%0A*Casa de Modas Esperanza Laguna*%0A%0A`;
     text += `¡Hola ${customerName}! Te enviamos el comprobante por *${formatPrice(amountPaid)}*.%0A`;
     if (balance > 0) text += `Tu saldo pendiente es de *${formatPrice(balance)}*.%0A`;
     else text += `*¡Tu cuenta está totalmente saldada!*%0A`;
@@ -251,7 +251,7 @@ export const doPrintAdvanceTicket = (data, amountPaid, format, hasShipping, ship
       </head>
       <body>
         <div class="header">
-          <img src="${logoSrc}" class="logo-img" alt="Logo FacturX" onerror="this.style.display='none'" />
+          <img src="${logoSrc}" class="logo-img" alt="Logo Esperanza Laguna" onerror="this.style.display='none'" />
           <p class="subtitle">${title}</p>
         </div>
         

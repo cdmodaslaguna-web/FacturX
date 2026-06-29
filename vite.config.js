@@ -6,6 +6,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   server: {
     host: true, // Permite conexiones desde móviles en la misma red WiFi
+    port: 5180, // Cambiar el puerto para evitar caché de Service Worker de otros proyectos
+    strictPort: true,
   },
   plugins: [
     react(),

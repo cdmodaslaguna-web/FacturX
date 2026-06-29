@@ -30,7 +30,7 @@ export default function ProductCard({ product, onClick, isSelected }) {
         </div>
 
       <div className="ppc-footer">
-        <p className="ppc-price">${Number(product.price).toFixed(2)}</p>
+        <p className="ppc-price">${Number(product.price).toLocaleString('es-CO')}</p>
       </div>
       </div>
     </div>

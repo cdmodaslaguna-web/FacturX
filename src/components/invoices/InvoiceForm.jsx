@@ -193,18 +193,18 @@ export default function InvoiceForm({ onSubmit, editingInvoice, onCancelEdit, ne
         </>
       }
       cartPane={
-        <form className="pos-cart-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{editingInvoice ? 'Editar' : 'Nueva Factura'}</h2>
-              <div style={{ color: '#7f8c8d', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <form className="pos-cart-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+          <div className="invoice-form-header">
+            <div className="invoice-title-date">
+              <h2 style={{ margin: 0, fontSize: '1.2rem' }}>{editingInvoice ? 'Editar' : 'Factura'}</h2>
+              <div className="invoice-meta">
                 <strong>{form.number}</strong>
                 <span>|</span>
-                <input type="date" value={form.date} onChange={e => handleChange('date', e.target.value)} style={{ border: 'none', background: 'transparent', color: '#7f8c8d', fontSize: '0.8rem', outline: 'none', padding: 0 }} title="Fecha de Factura" />
+                <input type="date" value={form.date} onChange={e => handleChange('date', e.target.value)} title="Fecha de Factura" />
               </div>
             </div>
             
-            <div>
+            <div className="invoice-actions-top">
               <input 
                 type="file" 
                 accept="image/*" 
@@ -212,24 +212,35 @@ export default function InvoiceForm({ onSubmit, editingInvoice, onCancelEdit, ne
                 style={{ display: 'none' }} 
                 onChange={handleScanInvoice} 
               />
-              <button type="button" className="btn-secondary" style={{ padding: '6px 10px', fontSize: '0.8rem', borderRadius: '15px' }} onClick={() => fileInputRef.current?.click()} disabled={isScanning}>
-                {isScanning ? '⏳...' : '📷 Escanear'}
+              <button type="button" className="btn-secondary btn-scan" onClick={() => fileInputRef.current?.click()} disabled={isScanning} title="Escanear Documento">
+                {isScanning ? '⏳' : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                )}
               </button>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+          <div className="invoice-form-grid">
             <div className="form-group">
-              <label>Cliente / Empresa</label>
-              <input value={form.clientName} onChange={e => handleChange('clientName', e.target.value)} placeholder="Ej: Juan Pérez" required />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Cliente
+              </label>
+              <input value={form.clientName} onChange={e => handleChange('clientName', e.target.value)} placeholder="Nombre" required />
             </div>
             <div className="form-group">
-              <label>NIT / C.C.</label>
-              <input value={form.clientId} onChange={e => handleChange('clientId', e.target.value)} placeholder="Documento de identidad" />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                NIT/CC
+              </label>
+              <input value={form.clientId} onChange={e => handleChange('clientId', e.target.value)} placeholder="Documento" />
             </div>
             <div className="form-group">
-              <label>Teléfono (WhatsApp)</label>
-              <input value={form.clientPhone} onChange={e => handleChange('clientPhone', e.target.value)} placeholder="Ej: 3001234567" type="tel" />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                Teléfono
+              </label>
+              <input value={form.clientPhone} onChange={e => handleChange('clientPhone', e.target.value)} placeholder="Número" type="tel" />
             </div>
           </div>
 
@@ -250,7 +261,7 @@ export default function InvoiceForm({ onSubmit, editingInvoice, onCancelEdit, ne
                   <input className="cart-item-qty" type="number" min="0" step="1" value={item.quantity} onChange={e => handleItemChange(i, 'quantity', e.target.value)} required />
                   <input className="cart-item-price" type="number" min="0" step="0.01" value={item.unitPrice} onChange={e => handleItemChange(i, 'unitPrice', e.target.value)} required />
                   <div className="cart-item-total">
-                    ${((Number(item.quantity) || 0) * (Number(item.unitPrice) || 0)).toFixed(2)}
+                    ${((Number(item.quantity) || 0) * (Number(item.unitPrice) || 0)).toLocaleString('es-CO')}
                   </div>
                   <button type="button" className="btn-remove" onClick={() => removeItem(i)}>✕</button>
                 </div>
@@ -261,18 +272,18 @@ export default function InvoiceForm({ onSubmit, editingInvoice, onCancelEdit, ne
           <div className="totals" style={{ marginTop: 'auto', marginBottom: '15px' }}>
             <div className="total-row total-final">
               <span>Total a Cobrar:</span>
-              <span style={{ color: '#184a2c' }}>${total.toFixed(2)}</span>
+              <span style={{ color: '#184a2c' }}>${total.toLocaleString('es-CO')}</span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
             {editingInvoice && (
-              <button type="button" className="btn-secondary" onClick={onCancelEdit} style={{ flex: 1, padding: '14px', borderRadius: '40px' }}>Cancelar</button>
+              <button type="button" className="btn-secondary" onClick={onCancelEdit} style={{ flex: 1, padding: '10px 8px', borderRadius: '20px', fontSize: '0.85rem' }}>Cancelar</button>
             )}
-            <button type="submit" onClick={() => setSubmitType('order')} className="btn-secondary" style={{ flex: 1, padding: '14px', borderRadius: '40px', border: '2px solid #184a2c', color: '#184a2c', background: 'transparent', fontWeight: 'bold' }}>
-              Generar Prefactura y Pedido
+            <button type="submit" onClick={() => setSubmitType('order')} className="btn-secondary" style={{ flex: 1, padding: '10px 8px', borderRadius: '20px', border: '2px solid #184a2c', color: '#184a2c', background: 'transparent', fontWeight: 'bold', fontSize: '0.85rem' }}>
+              Generar Prefactura
             </button>
-            <button type="submit" onClick={() => setSubmitType('invoice')} className="btn-primary" style={{ flex: 1, padding: '14px', borderRadius: '40px', background: '#184a2c', color: '#fff', fontWeight: 'bold', border: 'none' }}>
+            <button type="submit" onClick={() => setSubmitType('invoice')} className="btn-primary" style={{ flex: 1, padding: '10px 8px', borderRadius: '20px', fontWeight: 'bold', fontSize: '0.85rem' }}>
               {editingInvoice ? 'Actualizar Factura' : 'Generar Factura'}
             </button>
           </div>

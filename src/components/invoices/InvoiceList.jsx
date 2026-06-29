@@ -177,32 +177,32 @@ export default function InvoiceList({ invoices, onSelect, onEdit, onDelete, onAd
   const COLORS = ['#184a2c', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6'];
 
   return (
-    <div className="invoice-list-container" style={{ background: '#e8efe9', borderRadius: '24px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', minHeight: '100%' }}>
-      <div className="dashboard-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
-        <div className="stat-card" style={{ background: '#fff', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', textAlign: 'center', borderBottom: '4px solid #3b82f6' }}>
+    <div className="invoice-list-container" style={{ background: '#e8efe9', borderRadius: '24px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '20px', minHeight: '100%', width: '100%', boxSizing: 'border-box', margin: '0 auto' }}>
+      <div className="dashboard-stats" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
+        <div className="stat-card" style={{ minWidth: 0, gridColumn: 'span 2', background: '#fff', padding: '16px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', textAlign: 'center', borderBottom: '4px solid #3b82f6' }}>
           <h3 style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Total por Cobrar</h3>
           <p style={{ fontSize: '2rem', fontWeight: '900', color: '#1e293b', margin: 0 }}>{formatPrice(totalOwed)}</p>
         </div>
-        <div className="stat-card" style={{ background: '#fff', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', textAlign: 'center', borderBottom: '4px solid #10b981' }}>
-          <h3 style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Total Recaudado</h3>
-          <p style={{ fontSize: '2rem', fontWeight: '900', color: '#1e293b', margin: 0 }}>{formatPrice(totalPaid)}</p>
+        <div className="stat-card" style={{ minWidth: 0, background: '#fff', padding: '16px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', textAlign: 'center', borderBottom: '4px solid #10b981' }}>
+          <h3 style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Recaudado</h3>
+          <p style={{ fontSize: '1.4rem', fontWeight: '900', color: '#1e293b', margin: 0 }}>{formatPrice(totalPaid)}</p>
         </div>
-        <div className="stat-card highlight" style={{ background: '#fff', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', textAlign: 'center', borderBottom: '4px solid #ef4444' }}>
-          <h3 style={{ fontSize: '0.85rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Saldo Pendiente</h3>
-          <p style={{ fontSize: '2rem', fontWeight: '900', color: '#ef4444', margin: 0 }}>{formatPrice(totalPending)}</p>
+        <div className="stat-card highlight" style={{ minWidth: 0, background: '#fff', padding: '16px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', textAlign: 'center', borderBottom: '4px solid #ef4444' }}>
+          <h3 style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Pendiente</h3>
+          <p style={{ fontSize: '1.4rem', fontWeight: '900', color: '#ef4444', margin: 0 }}>{formatPrice(totalPending)}</p>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px', marginTop: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginTop: '10px', width: '100%', boxSizing: 'border-box', justifyContent: 'center' }}>
         
-        <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ margin: '0 0 20px 0', color: '#184a2c', fontSize: '1.2rem', textAlign: 'center' }}>Top 5 Productos (Unidades)</h3>
+        <div style={{ background: '#fff', padding: '16px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ margin: '0 0 16px 0', color: '#184a2c', fontSize: '1.1rem', textAlign: 'center' }}>Top 5 Productos (Unidades)</h3>
           <div style={{ width: '100%', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {topItems.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={topItems} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                <BarChart data={topItems} layout="vertical" margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" width={100} tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name" type="category" width={90} tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
                   <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={15}>
                     {topItems.map((entry, index) => (
@@ -217,16 +217,16 @@ export default function InvoiceList({ invoices, onSelect, onEdit, onDelete, onAd
           </div>
         </div>
 
-        <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ margin: '0 0 20px 0', color: '#3b82f6', fontSize: '1.2rem', textAlign: 'center' }}>Ingresos Mensuales</h3>
+        <div style={{ background: '#fff', padding: '16px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ margin: '0 0 16px 0', color: '#3b82f6', fontSize: '1.1rem', textAlign: 'center' }}>Ingresos Mensuales</h3>
           <div style={{ width: '100%', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {revenueByMonth.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={revenueByMonth} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                <LineChart data={revenueByMonth} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`} width={50} tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip formatter={(value) => [`$${value.toLocaleString()}`, 'Ingresos']} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                  <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`} width={45} tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip formatter={(value) => [`$${value.toLocaleString('es-CO')}`, 'Ingresos']} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                   <Line type="monotone" dataKey="total" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 0 }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -236,19 +236,19 @@ export default function InvoiceList({ invoices, onSelect, onEdit, onDelete, onAd
           </div>
         </div>
 
-        <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
-          <h3 style={{ margin: '0 0 20px 0', color: '#f59e0b', fontSize: '1.2rem', textAlign: 'center' }}>Distribución de Pedidos</h3>
-          <div style={{ width: '100%', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ background: '#fff', padding: '16px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <h3 style={{ margin: '0 0 16px 0', color: '#f59e0b', fontSize: '1.1rem', textAlign: 'center' }}>Distribución de Pedidos</h3>
+          <div style={{ width: '100%', height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {statusData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={statusData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                  <Pie data={statusData} cx="50%" cy="50%" innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
                     {statusData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-                  <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '11px', color: '#64748b' }} />
+                  <Legend verticalAlign="bottom" height={24} iconType="circle" wrapperStyle={{ fontSize: '10px', color: '#64748b' }} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (

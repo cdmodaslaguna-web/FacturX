@@ -75,6 +75,9 @@
   .main-layout-content {
     padding-top: 80px;
     padding-bottom: 100px;
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
   }
 
   /* Mostrar Dock Inferior en Móvil */

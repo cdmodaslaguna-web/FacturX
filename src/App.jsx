@@ -31,12 +31,28 @@ export default function App() {
   const [playAlert] = useSound('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg', { volume: 0.5 });
 
   useEffect(() => {
+    // Solicitar permisos de notificación nativa al cargar
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
     if (!isAuthenticated) return;
 
     const channel = supabase
       .channel('public:orders')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
-        playAlert();
+        // Reproducir sonido
+        playAlert().catch(e => console.log('Autoplay bloqueado', e));
+        
+        // Notificación nativa (OS)
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('🛒 ¡Nuevo Pedido en Línea!', {
+            body: `Recibiste un pedido de ${payload.new.customer_name || 'Alguien'}. Total: $${payload.new.total}`,
+            icon: '/src/assets/ico/ico1.png'
+          });
+        }
+
+        // Toast en pantalla
         toast.success(`¡Nuevo pedido de ${payload.new.customer_name || 'Alguien'}!`, {
           duration: 5000,
           position: 'top-right',
