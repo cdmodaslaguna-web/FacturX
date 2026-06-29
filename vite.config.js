@@ -4,6 +4,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    host: true, // Permite conexiones desde móviles en la misma red WiFi
+  },
   plugins: [
     react(),
     VitePWA({
