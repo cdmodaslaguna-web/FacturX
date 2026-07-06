@@ -1,10 +1,9 @@
 import { useState, useRef } from 'react'
-import { useProducts } from '../../hooks/useProducts'
 import { CATEGORIES } from '../../data/products'
 import { useConfirm } from '../../contexts/ConfirmContext'
 
-export default function ProductList() {
-  const { products, addProduct, updateProduct, deleteProduct, resetToBase } = useProducts()
+export default function ProductList({ productsState }) {
+  const { products, addProduct, updateProduct, deleteProduct, resetToBase } = productsState
   const confirm = useConfirm()
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({ name: '', variant: '', category: 'PN', price: '', imagePreview: '', description: '', photoUrl: '' })

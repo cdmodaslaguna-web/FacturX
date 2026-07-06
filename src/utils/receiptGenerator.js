@@ -12,7 +12,7 @@ const formatPrice = (price) => {
   }).format(price);
 };
 
-export const generateTicketCanvas = async (data, amountPaid, hasShipping, shippingCost, title = "Comprobante de Anticipo") => {
+export const generateTicketCanvas = async (data, amountPaid, format, hasShipping, shippingCost, title = "Comprobante de Anticipo") => {
   // data can be an order or an invoice
   const customerName = data.customer_name || data.clientName || 'Mostrador';
   const total = data.total || 0;
@@ -22,33 +22,50 @@ export const generateTicketCanvas = async (data, amountPaid, hasShipping, shippi
   const docId = data.id || data.orderId || 'S/N';
   const items = data.items || [];
 
+  const isCarta = format === 'carta';
+
   const ticketDiv = document.createElement('div');
   ticketDiv.style.position = 'absolute';
   ticketDiv.style.left = '-9999px';
-  ticketDiv.style.width = '400px';
+  ticketDiv.style.width = isCarta ? '800px' : '400px';
   ticketDiv.style.background = '#ffffff';
-  ticketDiv.style.padding = '20px';
+  ticketDiv.style.padding = isCarta ? '40px' : '20px';
   ticketDiv.style.color = '#1e293b';
   ticketDiv.style.fontFamily = "'Outfit', sans-serif";
+  ticketDiv.style.boxSizing = 'border-box';
 
   const logoSrc = new URL(log2, window.location.origin).href;
   const footerSrc = new URL(by2, window.location.origin).href;
 
   const itemsHtml = items.map(item => `
     <tr>
-      <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; font-size: 0.85rem;">${item.qty}x ${item.name || item.description}</td>
-      <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; text-align: right; font-size: 0.85rem;">${formatPrice((item.price || item.unitPrice) * item.qty)}</td>
+      <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; font-size: ${isCarta ? '1rem' : '0.85rem'};">${item.qty}x ${item.name || item.description}</td>
+      <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; text-align: right; font-size: ${isCarta ? '1rem' : '0.85rem'};">${formatPrice((item.price || item.unitPrice) * item.qty)}</td>
     </tr>
   `).join('');
 
   const shippingHtml = hasShipping ? `
     <tr>
-      <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; font-size: 0.85rem; font-weight: bold;">Envío / Domicilio</td>
-      <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; text-align: right; font-size: 0.85rem; font-weight: bold;">${formatPrice(shippingCost)}</td>
+      <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; font-size: ${isCarta ? '1rem' : '0.85rem'}; font-weight: bold;">Envío / Domicilio</td>
+      <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; text-align: right; font-size: ${isCarta ? '1rem' : '0.85rem'}; font-weight: bold;">${formatPrice(shippingCost)}</td>
     </tr>
   ` : '';
 
-  ticketDiv.innerHTML = `
+  const headerHtml = isCarta ? `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+      <img src="${logoSrc}" style="max-width: 200px; height: auto;" crossorigin="anonymous" />
+      <h3 style="margin: 0; font-size: 1.5rem; color: #184a2c; text-transform: uppercase;">${title}</h3>
+    </div>
+    <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 1rem; color: #475569;">
+      <div>
+        <p style="margin: 4px 0;"><strong>Fecha:</strong> ${date}</p>
+        <p style="margin: 4px 0;"><strong>Cliente:</strong> ${customerName}</p>
+      </div>
+      <div style="text-align: right;">
+        <p style="margin: 4px 0;"><strong>Doc #:</strong> ${docId.slice(0, 8).toUpperCase()}</p>
+      </div>
+    </div>
+  ` : `
     <div style="text-align: center; margin-bottom: 15px;">
       <img src="${logoSrc}" style="max-width: 150px; height: auto; margin-bottom: 5px;" crossorigin="anonymous" />
       <h3 style="margin: 0; font-size: 1.1rem; color: #184a2c; text-transform: uppercase;">${title}</h3>
@@ -58,30 +75,36 @@ export const generateTicketCanvas = async (data, amountPaid, hasShipping, shippi
       <p style="margin: 4px 0;"><strong>Cliente:</strong> ${customerName}</p>
       <p style="margin: 4px 0;"><strong>Doc #:</strong> ${docId.slice(0, 8).toUpperCase()}</p>
     </div>
+  `;
+
+  ticketDiv.innerHTML = `
+    ${headerHtml}
     <div style="border-bottom: 2px dashed #cbd5e1; margin: 15px 0;"></div>
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
       ${itemsHtml}
       ${shippingHtml}
     </table>
-    <table style="width: 100%; border-collapse: collapse;">
-      <tr style="font-weight: 700; font-size: 1.05rem;">
-        <td style="padding: 6px 0;">Total a Pagar:</td>
-        <td style="text-align: right;">${formatPrice(totalConEnvio)}</td>
-      </tr>
-      <tr style="font-weight: 700; font-size: 1.2rem; color: #184a2c;">
-        <td style="padding: 6px 0;">Monto Abonado:</td>
-        <td style="text-align: right;">${formatPrice(amountPaid)}</td>
-      </tr>
-      <tr style="font-weight: 700; font-size: 1.05rem; color: #ef4444;">
-        <td style="padding: 6px 0;">Saldo Pendiente:</td>
-        <td style="text-align: right;">${formatPrice(balance > 0 ? balance : 0)}</td>
-      </tr>
-    </table>
+    <div style="${isCarta ? 'width: 50%; margin-left: auto;' : ''}">
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr style="font-weight: 700; font-size: ${isCarta ? '1.1rem' : '1.05rem'};">
+          <td style="padding: 6px 0;">Total a Pagar:</td>
+          <td style="text-align: right;">${formatPrice(totalConEnvio)}</td>
+        </tr>
+        <tr style="font-weight: 700; font-size: ${isCarta ? '1.3rem' : '1.2rem'}; color: #184a2c;">
+          <td style="padding: 6px 0;">Monto Abonado:</td>
+          <td style="text-align: right;">${formatPrice(amountPaid)}</td>
+        </tr>
+        <tr style="font-weight: 700; font-size: ${isCarta ? '1.1rem' : '1.05rem'}; color: ${balance > 0 ? '#ef4444' : '#184a2c'};">
+          <td style="padding: 6px 0;">Saldo Pendiente:</td>
+          <td style="text-align: right;">${formatPrice(balance > 0 ? balance : 0)}</td>
+        </tr>
+      </table>
+    </div>
     <div style="border-bottom: 2px dashed #cbd5e1; margin: 20px 0;"></div>
-    <div style="text-align: center; font-size: 0.85rem; color: #64748b;">
+    <div style="text-align: center; font-size: ${isCarta ? '1rem' : '0.85rem'}; color: #64748b; ${isCarta ? 'margin-top: 40px;' : ''}">
       <p style="margin: 4px 0;"><strong>El pago está sujeto a verificación bancaria.</strong></p>
-      <p style="margin: 15px 0 5px 0; font-weight: 700; color: #184a2c; font-size: 1.1rem;">¡Gracias por confiar en nosotros!</p>
-      <img src="${footerSrc}" style="max-width: 80px; margin-top: 10px;" crossorigin="anonymous" />
+      <p style="margin: 15px 0 5px 0; font-weight: 700; color: #184a2c; font-size: ${isCarta ? '1.2rem' : '1.1rem'};">¡Gracias por confiar en nosotros!</p>
+      <img src="${footerSrc}" style="max-width: ${isCarta ? '100px' : '80px'}; margin-top: 10px;" crossorigin="anonymous" />
     </div>
   `;
 
@@ -113,14 +136,14 @@ export const generateTicketCanvas = async (data, amountPaid, hasShipping, shippi
     document.body.removeChild(ticketDiv);
     return canvas;
   } catch (err) {
-    document.body.removeChild(ticketDiv);
+    if (document.body.contains(ticketDiv)) document.body.removeChild(ticketDiv);
     console.error(err);
     return null;
   }
 };
 
-export const doDownloadReceiptImage = async (data, amountPaid, hasShipping, shippingCost, title = "Comprobante de Anticipo") => {
-  const canvas = await generateTicketCanvas(data, amountPaid, hasShipping, shippingCost, title);
+export const doDownloadReceiptImage = async (data, amountPaid, format, hasShipping, shippingCost, title = "Comprobante de Anticipo") => {
+  const canvas = await generateTicketCanvas(data, amountPaid, format, hasShipping, shippingCost, title);
   if (!canvas) {
     toast.error("Hubo un error al generar la imagen.");
     return;
@@ -134,7 +157,7 @@ export const doDownloadReceiptImage = async (data, amountPaid, hasShipping, ship
   toast.success("¡La imagen se ha descargado correctamente!");
 };
 
-export const doSendReceiptViaWhatsApp = async (data, amountPaid, hasShipping, shippingCost, title = "Comprobante de Anticipo") => {
+export const doSendReceiptViaWhatsApp = async (data, amountPaid, format, hasShipping, shippingCost, title = "Comprobante de Anticipo") => {
   const customerPhone = data.customer_phone || data.clientPhone || data.clientId || '';
   if (!customerPhone) {
     toast.error("Sin número registrado. Selecciona el contacto en WhatsApp.");
@@ -145,7 +168,7 @@ export const doSendReceiptViaWhatsApp = async (data, amountPaid, hasShipping, sh
     phone = '57' + phone;
   }
 
-  const canvas = await generateTicketCanvas(data, amountPaid, hasShipping, shippingCost, title);
+  const canvas = await generateTicketCanvas(data, amountPaid, format, hasShipping, shippingCost, title);
   if (!canvas) {
     toast.error("Error al generar imagen. Se enviará solo el texto.");
   }
@@ -153,6 +176,29 @@ export const doSendReceiptViaWhatsApp = async (data, amountPaid, hasShipping, sh
   const totalConEnvio = (data.total || 0) + (hasShipping ? shippingCost : 0);
   const balance = totalConEnvio - amountPaid;
   const customerName = data.customer_name || data.clientName || '';
+  const docId = data.id || data.orderId || 'S/N';
+
+  const getText = (includePastingHint) => {
+    let text = `Estimado/a ${customerName},\n`;
+    text += `Adjuntamos el comprobante de su pedido (Doc #: ${docId.slice(0, 8).toUpperCase()}).\n\n`;
+    
+    if (balance > 0) {
+      text += `Resumen de cuenta:\n`;
+      text += `- Monto abonado: *${formatPrice(amountPaid)}*\n`;
+      text += `- Saldo pendiente: *${formatPrice(balance)}*\n\n`;
+      text += `Puede realizar el pago de su saldo de forma segura a través del siguiente enlace:\nhttp://localhost:3000/pago-link?amount=${balance}&ref=${data.id || data.orderId || 'ABONO'}\n\n`;
+    } else {
+      text += `*¡Su pedido se encuentra totalmente pagado!*\n`;
+      text += `Ya puede pasar a recogerlo en nuestras instalaciones. ¡Le esperamos!\n\n`;
+    }
+
+    if (includePastingHint) {
+        text += `_(Por favor, pegue la imagen del comprobante a continuación)_`;
+    } else if (canvas) {
+        text += `_(Hemos adjuntado la imagen del comprobante a este mensaje)_`;
+    }
+    return text;
+  };
 
   if (canvas) {
     canvas.toBlob(async (blob) => {
@@ -160,31 +206,17 @@ export const doSendReceiptViaWhatsApp = async (data, amountPaid, hasShipping, sh
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob })
         ]);
-        let text = `🧾 *${title.toUpperCase()}*%0A*Casa de Modas Esperanza Laguna*%0A%0A`;
-        text += `¡Hola ${customerName}! Te enviamos el comprobante por *${formatPrice(amountPaid)}*.%0A`;
-        if (balance > 0) text += `Tu saldo pendiente es de *${formatPrice(balance)}*.%0A%0A`;
-        else text += `*¡Tu cuenta está totalmente saldada!*%0A%0A`;
-        text += `👉 _(Para pegar el comprobante aquí dale *Ctrl + V* o *Pegar*)_`;
         toast.success("Imagen copiada. Pégala en WhatsApp (Ctrl+V)");
         setTimeout(() => {
-          window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+          window.open(`https://wa.me/${phone}?text=${encodeURIComponent(getText(true))}`, '_blank');
         }, 1500);
       } catch (err) {
         console.error("Error al copiar:", err);
-        let text = `🧾 *${title.toUpperCase()}*%0A*Casa de Modas Esperanza Laguna*%0A%0A`;
-        text += `¡Hola ${customerName}! Te enviamos el comprobante por *${formatPrice(amountPaid)}*.%0A`;
-        if (balance > 0) text += `Tu saldo pendiente es de *${formatPrice(balance)}*.%0A%0A`;
-        else text += `*¡Tu cuenta está totalmente saldada!*%0A%0A`;
-        text += `_(Adjunta a este mensaje la imagen que descargaste en tu computadora)_`;
-        window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(getText(false))}`, '_blank');
       }
     }, 'image/png');
   } else {
-    let text = `🧾 *${title.toUpperCase()}*%0A*Casa de Modas Esperanza Laguna*%0A%0A`;
-    text += `¡Hola ${customerName}! Te enviamos el comprobante por *${formatPrice(amountPaid)}*.%0A`;
-    if (balance > 0) text += `Tu saldo pendiente es de *${formatPrice(balance)}*.%0A`;
-    else text += `*¡Tu cuenta está totalmente saldada!*%0A`;
-    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(getText(false))}`, '_blank');
   }
 };
 

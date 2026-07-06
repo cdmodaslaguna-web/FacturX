@@ -12,21 +12,25 @@ import { useConfirm } from './contexts/ConfirmContext'
 import { useAuth } from './contexts/AuthContext'
 import useSound from 'use-sound'
 import toast, { Toaster } from 'react-hot-toast'
-import { supabase } from './supabaseClient'
+import { io } from 'socket.io-client'
 import LoginScreen from './components/auth/LoginScreen'
 import ChangePasswordScreen from './components/auth/ChangePasswordScreen'
 import PublicCatalog from './components/products/PublicCatalog'
 import './App.css'
 import './PWA.css'
+import PaymentPage from './components/payments/PaymentPage'
+
+import { useProducts } from './hooks/useProducts'
+import { useOrders } from './hooks/useOrders'
 
 export default function App() {
   const { isAuthenticated, currentUser } = useAuth()
-  const { invoices, editingInvoice, addInvoice, updateInvoice, deleteInvoice, getInvoice, addPayment, startEdit, clearEdit, peekNextNumber } = useInvoices()
+  const { invoices, editingInvoice, addInvoice, updateInvoice, deleteInvoice, addPayment, startEdit, clearEdit, peekNextNumber } = useInvoices()
+  const productsState = useProducts()
+  const ordersState = useOrders()
   const confirm = useConfirm()
   const [view, setView] = useState('list') // 'list', 'form', 'products'
   const [previewInvoice, setPreviewInvoice] = useState(null)
-
-  const isLoginRoute = window.location.pathname === '/login';
 
   const [playAlert] = useSound('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg', { volume: 0.5 });
 
@@ -38,36 +42,35 @@ export default function App() {
 
     if (!isAuthenticated) return;
 
-    const channel = supabase
-      .channel('public:orders')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, payload => {
-        // Reproducir sonido
-        playAlert().catch(e => console.log('Autoplay bloqueado', e));
-        
-        // Notificación nativa (OS)
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification('🛒 ¡Nuevo Pedido en Línea!', {
-            body: `Recibiste un pedido de ${payload.new.customer_name || 'Alguien'}. Total: $${payload.new.total}`,
-            icon: '/src/assets/ico/ico1.png'
-          });
-        }
+    const socket = io('http://localhost:3000');
 
-        // Toast en pantalla
-        toast.success(`¡Nuevo pedido de ${payload.new.customer_name || 'Alguien'}!`, {
-          duration: 5000,
-          position: 'top-right',
-          style: {
-            background: '#184a2c',
-            color: '#fff',
-            fontWeight: 'bold'
-          },
-          icon: '🛍️',
+    socket.on('new_order', (newOrder) => {
+      // Reproducir sonido
+      playAlert().catch(e => console.log('Autoplay bloqueado', e));
+      
+      // Notificación nativa (OS)
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('🛒 ¡Nuevo Pedido en Línea!', {
+          body: `Recibiste un pedido de ${newOrder.customer_name || 'Alguien'}. Total: $${newOrder.total}`,
+          icon: '/src/assets/ico/ico1.png'
         });
-      })
-      .subscribe();
+      }
+
+      // Toast en pantalla
+      toast.success(`¡Nuevo pedido de ${newOrder.customer_name || 'Alguien'}!`, {
+        duration: 5000,
+        position: 'top-right',
+        style: {
+          background: '#184a2c',
+          color: '#fff',
+          fontWeight: 'bold'
+        },
+        icon: '🛍️',
+      });
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      socket.disconnect();
     }
   }, [isAuthenticated, playAlert]);
 
@@ -76,6 +79,11 @@ export default function App() {
   // La raíz siempre es el catálogo público para todos (autenticados o no)
   if (isCatalogRoute) {
     return <PublicCatalog />;
+  }
+
+  const isPayRoute = window.location.pathname.startsWith('/pagar');
+  if (isPayRoute) {
+    return <PaymentPage />;
   }
 
   if (!isAuthenticated) {
@@ -109,14 +117,19 @@ export default function App() {
         status: 'confirmed'
       }
       
-      supabase.from('orders').insert([orderData]).then(({ error }) => {
-        if (error) {
-          console.error("Error creating manual order:", error)
-        } else {
-          toast.success("Pedido creado y enviado a la sección de Pedidos Recibidos", {
-            style: { background: '#184a2c', color: '#fff', fontWeight: 'bold' }
-          })
+      fetch('http://localhost:3000/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      }).then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
+        toast.success("Pedido creado y enviado a la sección de Pedidos Recibidos", {
+          style: { background: '#184a2c', color: '#fff', fontWeight: 'bold' }
+        })
+      }).catch(error => {
+        console.error("Error creating manual order:", error)
       })
     }
 
@@ -161,23 +174,23 @@ export default function App() {
       >
         <AnimatePresence mode="wait">
           {view === 'form' ? (
-            <motion.div key="form" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+            <motion.div key="form" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.15 }}>
               <InvoiceForm onSubmit={handleSubmit} editingInvoice={editingInvoice} onCancelEdit={() => { clearEdit(); setView('list') }} nextInvoiceNumber={peekNextNumber()} />
             </motion.div>
           ) : view === 'products' ? (
-            <motion.div key="products" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
-              <ProductList />
+            <motion.div key="products" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.15 }}>
+              <ProductList productsState={productsState} />
             </motion.div>
           ) : view === 'orders' ? (
-            <motion.div key="orders" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
-              <OrderList />
+            <motion.div key="orders" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.15 }}>
+              <OrderList ordersState={ordersState} />
             </motion.div>
           ) : view === 'users' ? (
-            <motion.div key="users" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }}>
+            <motion.div key="users" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.15 }}>
               <UserList />
             </motion.div>
           ) : (
-            <motion.div key="list" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3 }}>
+            <motion.div key="list" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.15 }}>
               <InvoiceList invoices={invoices} onSelect={setPreviewInvoice} onEdit={handleEdit} onDelete={handleDelete} onAddPayment={addPayment} />
             </motion.div>
           )}

@@ -1,6 +1,7 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, CartesianGrid, Legend } from 'recharts'
+import { Printer, MapPin, Receipt, ArrowRight, Wallet, TrendingUp, Filter, Phone, Calendar, Hash, FileText } from 'lucide-react'
 import PaymentHistoryModal from './PaymentHistoryModal'
 import { useOrders } from '../../hooks/useOrders'
 import { useInvoices } from '../../hooks/useInvoices'
@@ -15,7 +16,7 @@ const formatPrice = (price) => {
   }).format(price);
 };
 
-export default function InvoiceList({ invoices, onSelect, onEdit, onDelete, onAddPayment }) {
+export default function InvoiceList({ invoices, onSelect, onAddPayment }) {
   const [paymentAmount, setPaymentAmount] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('Efectivo')
   const [paymentNotes, setPaymentNotes] = useState('')

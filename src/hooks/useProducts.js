@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '../supabaseClient'
 import { uploadImageToCloudinary } from '../utils/cloudinary'
+
+const API_URL = 'http://localhost:3000';
 
 export function useProducts() {
   const [products, setProducts] = useState([])
@@ -12,15 +13,18 @@ export function useProducts() {
 
   async function fetchProducts() {
     setLoading(true)
-    const { data, error } = await supabase.from('products').select('*')
-    
-    if (error) {
-      console.error('Error fetching products:', error)
-      setProducts([])
-    } else if (data && data.length > 0) {
-      setProducts(data)
-    } else {
-      setProducts([])
+    try {
+      const response = await fetch(`${API_URL}/products`);
+      if (response.ok) {
+        const data = await response.json();
+        setProducts(data);
+      } else {
+        console.error('Error fetching products from backend');
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error('Network error fetching products:', error);
+      setProducts([]);
     }
     setLoading(false)
   }
@@ -29,15 +33,11 @@ export function useProducts() {
     try {
       let finalPhotoUrl = product.photoUrl || null;
 
-      // 1. Subir a Cloudinary si hay archivo físico
       if (imageFile) {
         finalPhotoUrl = await uploadImageToCloudinary(imageFile);
       }
 
-      // 2. Construir el objeto final, asegurando que usamos "photoUrl"
-      // Se omite explícitamente "image" para evitar el error PGRST204
       const newProduct = {
-        id: 'custom-' + Date.now().toString(36),
         name: product.name,
         price: product.price,
         category: product.category,
@@ -46,17 +46,18 @@ export function useProducts() {
         photoUrl: finalPhotoUrl
       };
       
-      // 3. Insertar en Supabase
-      const { data, error } = await supabase.from('products').insert([newProduct]).select();
+      const response = await fetch(`${API_URL}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProduct)
+      });
       
-      if (error) {
-        throw error;
-      }
+      if (!response.ok) throw new Error('Error creating product in backend');
       
-      // 4. Actualización optimista local
-      setProducts(prev => [data?.[0] || newProduct, ...prev]);
+      const data = await response.json();
+      setProducts(prev => [data, ...prev]);
       
-      return data?.[0] || newProduct;
+      return data;
     } catch (error) {
       console.error('Error in addProduct:', error);
       throw error;
@@ -67,12 +68,10 @@ export function useProducts() {
     try {
       let finalPhotoUrl = updates.photoUrl;
 
-      // 1. Subir nueva imagen si la hay
       if (imageFile) {
         finalPhotoUrl = await uploadImageToCloudinary(imageFile);
       }
 
-      // Evitamos mandar "image" u otras llaves inválidas
       const cleanUpdates = {
         name: updates.name,
         price: updates.price,
@@ -82,14 +81,15 @@ export function useProducts() {
         ...(finalPhotoUrl !== undefined && { photoUrl: finalPhotoUrl })
       };
 
-      // 2. Actualizar en Supabase
-      const { error } = await supabase.from('products').update(cleanUpdates).eq('id', id);
+      const response = await fetch(`${API_URL}/products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(cleanUpdates)
+      });
       
-      if (error) {
-        throw error;
-      }
+      if (!response.ok) throw new Error('Error updating product in backend');
 
-      // 3. Actualización optimista local
+      await response.json();
       setProducts(prev => prev.map(p => p.id === id ? { ...p, ...cleanUpdates } : p));
     } catch (error) {
       console.error('Error updating product:', error);
@@ -98,12 +98,12 @@ export function useProducts() {
   }
 
   async function deleteProduct(id) {
-    // Actualización optimista
     setProducts(prev => prev.filter(p => p.id !== id))
     
-    const { error } = await supabase.from('products').delete().eq('id', id)
-    if (error) {
-      console.error('Error deleting product:', error)
+    try {
+      await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
+    } catch (error) {
+      console.error('Error deleting product in backend:', error);
     }
   }
 

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useState, useContext, useEffect } from 'react'
 
 const AuthContext = createContext()
@@ -53,34 +54,44 @@ export function AuthProvider({ children }) {
     localStorage.setItem('facturx_users', JSON.stringify(newUsers))
   }
 
-  const login = (usernameOrPin, isPinOnly = false) => {
-    let foundUser = null
-    
-    if (isPinOnly && rememberedUser) {
-      foundUser = users.find(u => u.username === rememberedUser.username && u.pin === usernameOrPin)
-    } else {
-      foundUser = users.find(u => (u.username === usernameOrPin || u.pin === usernameOrPin))
-    }
-
-    if (foundUser) {
-      setCurrentUser(foundUser)
-      setIsAuthenticated(true)
-      
-      const rememberObj = {
-        username: foundUser.username,
-        name: foundUser.name,
-        role: foundUser.role,
-        photoUrl: foundUser.photoUrl
+  const login = async (username, pin, isPinOnly = false) => {
+    try {
+      let payload = { username, pin };
+      if (isPinOnly && rememberedUser) {
+        payload.username = rememberedUser.username;
+        payload.pin = username; // username parameter actually receives the pin in this case
       }
-      setRememberedUser(rememberObj)
-      localStorage.setItem('facturx_remembered_user', JSON.stringify(rememberObj))
-      
-      // Save session
-      localStorage.setItem('facturx_session', foundUser.id)
-      
-      return true
+
+      const response = await fetch('http://localhost:3000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const foundUser = data.user;
+        
+        setCurrentUser(foundUser)
+        setIsAuthenticated(true)
+        
+        const rememberObj = {
+          username: foundUser.username,
+          name: foundUser.name,
+          role: foundUser.role,
+          photoUrl: foundUser.photoUrl
+        }
+        setRememberedUser(rememberObj)
+        localStorage.setItem('facturx_remembered_user', JSON.stringify(rememberObj))
+        
+        localStorage.setItem('facturx_session', foundUser.id)
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error in login:', error);
+      return false;
     }
-    return false
   }
 
   const logout = () => {
