@@ -186,7 +186,7 @@ export const doSendReceiptViaWhatsApp = async (data, amountPaid, format, hasShip
       text += `Resumen de cuenta:\n`;
       text += `- Monto abonado: *${formatPrice(amountPaid)}*\n`;
       text += `- Saldo pendiente: *${formatPrice(balance)}*\n\n`;
-      text += `Puede realizar el pago de su saldo de forma segura a través del siguiente enlace:\nhttp://localhost:3000/pago-link?amount=${balance}&ref=${data.id || data.orderId || 'ABONO'}\n\n`;
+      text += `Puede realizar el pago de su saldo de forma segura a través del siguiente enlace:\n${window.location.origin}/pagar?amount=${balance}&ref=${data.id || data.orderId || 'ABONO'}\n\n`;
     } else {
       text += `*¡Su pedido se encuentra totalmente pagado!*\n`;
       text += `Ya puede pasar a recogerlo en nuestras instalaciones. ¡Le esperamos!\n\n`;

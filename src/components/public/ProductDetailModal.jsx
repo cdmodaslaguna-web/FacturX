@@ -11,6 +11,7 @@ export default function ProductDetailModal({ product, onClose }) {
   
   const [modalSizes, setModalSizes] = useState({ shirtSize: '', pantsSize: '' });
   const [modalQty, setModalQty] = useState(1);
+  const [customText, setCustomText] = useState('');
 
   // Funciones heredadas del componente original
   const needsPantsSize = (prod) => {
@@ -32,6 +33,13 @@ export default function ProductDetailModal({ product, onClose }) {
     return false;
   };
 
+  const needsCustomText = (prod) => {
+    if (!prod) return false;
+    const name = prod.name.toLowerCase();
+    const keywords = ['insignia', 'emblema', 'medialuna', 'media luna'];
+    return keywords.some(k => name.includes(k));
+  };
+
   const getProductSizes = (prod) => {
     if (!prod || !prod.variant) return null;
     const parts = prod.variant.split(',').map(s => s.trim()).filter(Boolean);
@@ -44,7 +52,9 @@ export default function ProductDetailModal({ product, onClose }) {
 
   const reqShirt = needsShirtSize(product);
   const reqPants = needsPantsSize(product);
+  const reqCustom = needsCustomText(product);
   const isSizeValid = (!reqShirt || modalSizes.shirtSize) && (!reqPants || modalSizes.pantsSize);
+  const isCustomValid = !reqCustom || customText.trim().length > 0;
 
   const handleAddToCart = () => {
     if (reqShirt && reqPants && (!modalSizes.shirtSize || !modalSizes.pantsSize)) {
@@ -59,8 +69,15 @@ export default function ProductDetailModal({ product, onClose }) {
       alert("Por favor selecciona la talla.");
       return;
     }
+    if (reqCustom && !customText.trim()) {
+      alert("Por favor ingresa el nombre a bordar (campo o club).");
+      return;
+    }
 
-    addToCart(product, modalQty, modalSizes);
+    addToCart(product, modalQty, {
+      ...modalSizes,
+      customDetails: reqCustom ? [{ name: customText.trim() }] : []
+    });
     onClose();
   };
 
@@ -158,6 +175,12 @@ export default function ProductDetailModal({ product, onClose }) {
             <h2 style={{ margin: '0 0 8px 0', fontSize: '1.8rem', color: '#1e293b', fontWeight: '900' }}>
               {product.name}
             </h2>
+
+            {product.variant && (
+              <div style={{ display: 'inline-block', background: '#e0e7ff', color: '#3730a3', padding: '4px 10px', borderRadius: '6px', fontSize: '0.9rem', fontWeight: 'bold', marginBottom: '15px' }}>
+                Variante: {product.variant}
+              </div>
+            )}
             
             {product.description && (
               <p style={{ margin: '0 0 20px 0', color: '#64748b', lineHeight: '1.6' }}>
@@ -237,6 +260,36 @@ export default function ProductDetailModal({ product, onClose }) {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {reqCustom && (
+              <div style={{ 
+                background: '#f8fafc', 
+                padding: '20px', 
+                borderRadius: '16px', 
+                marginBottom: '24px', 
+                border: '1px solid #e2e8f0' 
+              }}>
+                <h4 style={{ margin: '0 0 10px 0', color: '#1e293b', fontSize: '1.1rem' }}>Personalización</h4>
+                <label style={{ display: 'block', fontSize: '0.9rem', color: '#64748b', marginBottom: '8px', fontWeight: 'bold' }}>
+                  Nombre del campo o club a bordar
+                </label>
+                <input 
+                  type="text" 
+                  value={customText}
+                  onChange={(e) => setCustomText(e.target.value)}
+                  placeholder="Ej. Club de Conquistadores Orion"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '1rem',
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
               </div>
             )}
 
