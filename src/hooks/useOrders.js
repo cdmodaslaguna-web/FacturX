@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { io } from 'socket.io-client'
 
-const API_URL = 'http://localhost:3000';
+const API_URL = `http://${window.location.hostname}:3000`;
 
 export function useOrders() {
   const [orders, setOrders] = useState([])

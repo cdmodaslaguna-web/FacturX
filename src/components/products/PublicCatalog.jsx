@@ -48,20 +48,27 @@ export default function PublicCatalog() {
       <main style={{ flex: 1 }}>
         <CatalogHero />
         
-        <ProductGrid 
-          products={filteredProducts} 
-          onOpenModal={(prod) => setSelectedProduct(prod)} 
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
-
-        {selectedProduct && (
+        {!selectedProduct ? (
+          <ProductGrid 
+            products={filteredProducts} 
+            onOpenModal={(prod) => {
+              setSelectedProduct(prod);
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }, 50);
+            }} 
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
+        ) : (
           <div id="product-detail-section">
             <ProductDetailView 
               product={selectedProduct} 
               onBack={() => {
                 setSelectedProduct(null);
-                document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+                setTimeout(() => {
+                  document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+                }, 50);
               }} 
             />
           </div>

@@ -62,7 +62,7 @@ export function AuthProvider({ children }) {
         payload.pin = username; // username parameter actually receives the pin in this case
       }
 
-      const response = await fetch('http://localhost:3000/auth/login', {
+      const response = await fetch(`http://${window.location.hostname}:3000/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

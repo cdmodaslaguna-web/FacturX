@@ -55,7 +55,7 @@ export default function WompiCheckout({ amount, reference, onSuccess, onError })
 
       // 2. Enviar el token a nuestro backend para firmar y crear la transacción
       // Nota: Aquí llamamos a nuestro propio backend de NestJS
-      const backendResponse = await fetch('http://localhost:3000/wompi/transaction', {
+      const backendResponse = await fetch(`http://${window.location.hostname}:3000/wompi/transaction`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

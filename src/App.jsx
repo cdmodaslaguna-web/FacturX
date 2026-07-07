@@ -42,7 +42,7 @@ export default function App() {
 
     if (!isAuthenticated) return;
 
-    const socket = io('http://localhost:3000');
+    const socket = io(`http://${window.location.hostname}:3000`);
 
     socket.on('new_order', (newOrder) => {
       // Reproducir sonido
@@ -117,7 +117,7 @@ export default function App() {
         status: 'confirmed'
       }
       
-      fetch('http://localhost:3000/orders', {
+      fetch(`http://${window.location.hostname}:3000/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData)
