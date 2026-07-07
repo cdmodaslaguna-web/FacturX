@@ -78,6 +78,19 @@ export default function ProductDetailView({ product, onBack }) {
   const reqShirt = needsShirtSize(product);
   const reqPants = needsPantsSize(product);
   
+  const [purchaseMode, setPurchaseMode] = useState('lote'); // 'unidad' | 'lote'
+  const isMultiSize = purchaseMode === 'lote' && (reqShirt || reqPants) && !(reqShirt && reqPants);
+  const [multiSizes, setMultiSizes] = useState({});
+  const getMultiSizeTotal = () => Object.values(multiSizes).reduce((a, b) => a + (parseInt(b) || 0), 0);
+
+  // Sync global qty with multiSizeTotal if applicable
+  useEffect(() => {
+    if (isMultiSize) {
+      const total = getMultiSizeTotal();
+      setQty(Math.max(1, total));
+    }
+  }, [multiSizes, isMultiSize]);
+
   const needsNameAndRH = product ? product.name.toLowerCase().includes('nombre') : false;
   const needsClub = product ? (
     product.name.toLowerCase().includes('medialuna') || 
@@ -86,7 +99,9 @@ export default function ProductDetailView({ product, onBack }) {
     product.name.toLowerCase().includes('emblema')
   ) : false;
 
-  const isSizeValid = (!reqShirt || sizes.shirtSize) && (!reqPants || sizes.pantsSize);
+  const isSizeValid = isMultiSize 
+    ? getMultiSizeTotal() > 0 
+    : (!reqShirt || sizes.shirtSize) && (!reqPants || sizes.pantsSize);
   
   const isCustomDataValid = () => {
     if (!needsNameAndRH && !needsClub) return true;
@@ -102,7 +117,7 @@ export default function ProductDetailView({ product, onBack }) {
 
   const handleAddToCart = () => {
     if (!isSizeValid) {
-      alert("Por favor selecciona la talla requerida.");
+      alert("Por favor selecciona al menos una talla requerida.");
       return;
     }
     if (!isCustomDataValid()) {
@@ -111,7 +126,23 @@ export default function ProductDetailView({ product, onBack }) {
     }
 
     const detailsToPass = (needsNameAndRH || needsClub) ? customDetails : [];
-    addToCart(product, qty, { ...sizes, customDetails: detailsToPass });
+
+    if (isMultiSize) {
+      // Agregar al carrito por cada talla seleccionada
+      Object.entries(multiSizes).forEach(([size, amount]) => {
+        const numAmount = parseInt(amount) || 0;
+        if (numAmount > 0) {
+          addToCart(product, numAmount, { 
+            shirtSize: reqShirt ? size : '', 
+            pantsSize: reqPants ? size : '', 
+            customDetails: detailsToPass 
+          });
+        }
+      });
+    } else {
+      // Flujo normal (Uniformes con ambas tallas, o productos sin talla)
+      addToCart(product, qty, { ...sizes, customDetails: detailsToPass });
+    }
     onBack();
   };
 
@@ -255,6 +286,23 @@ export default function ProductDetailView({ product, onBack }) {
             }}>
               <h4 style={{ margin: '0 0 20px 0', color: '#1e293b', fontSize: '1.2rem' }}>Selecciona tu talla</h4>
               
+              {((reqShirt || reqPants) && !(reqShirt && reqPants)) && (
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
+                  <button 
+                    onClick={() => setPurchaseMode('unidad')}
+                    style={{ flex: 1, padding: '12px', borderRadius: '12px', background: purchaseMode === 'unidad' ? '#184a2c' : '#f1f5f9', color: purchaseMode === 'unidad' ? '#fff' : '#64748b', fontWeight: 'bold', border: 'none', cursor: 'pointer', transition: 'all 0.2s', boxShadow: purchaseMode === 'unidad' ? '0 4px 10px rgba(24, 74, 44, 0.2)' : 'none' }}
+                  >
+                    Por Unidad
+                  </button>
+                  <button 
+                    onClick={() => setPurchaseMode('lote')}
+                    style={{ flex: 1, padding: '12px', borderRadius: '12px', background: purchaseMode === 'lote' ? '#184a2c' : '#f1f5f9', color: purchaseMode === 'lote' ? '#fff' : '#64748b', fontWeight: 'bold', border: 'none', cursor: 'pointer', transition: 'all 0.2s', boxShadow: purchaseMode === 'lote' ? '0 4px 10px rgba(24, 74, 44, 0.2)' : 'none' }}
+                  >
+                    Por Lote
+                  </button>
+                </div>
+              )}
+              
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 {reqShirt && (
                   <div>
@@ -262,25 +310,54 @@ export default function ProductDetailView({ product, onBack }) {
                       {reqPants ? 'Camisa / Blusa / Superior' : 'Talla Única'}
                     </label>
                     <div className="notranslate" translate="no" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                      {(getProductSizes(product) || defaultShirtSizes).map(s => (
-                        <button
-                          key={s}
-                          onClick={() => setSizes({...sizes, shirtSize: s})}
-                          style={{
-                            padding: '10px 16px',
-                            borderRadius: '10px',
-                            border: sizes.shirtSize === s ? '2px solid #184a2c' : '1px solid #cbd5e1',
-                            background: sizes.shirtSize === s ? '#e8efe9' : '#fff',
-                            color: sizes.shirtSize === s ? '#184a2c' : '#475569',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            outline: 'none'
-                          }}
-                        >
-                          {s}
-                        </button>
-                      ))}
+                      {(getProductSizes(product) || defaultShirtSizes).map(s => {
+                        if (!isMultiSize) {
+                          return (
+                            <button
+                              key={s}
+                              onClick={() => setSizes({...sizes, shirtSize: s})}
+                              style={{
+                                padding: '10px 16px',
+                                borderRadius: '10px',
+                                border: sizes.shirtSize === s ? '2px solid #184a2c' : '1px solid #cbd5e1',
+                                background: sizes.shirtSize === s ? '#e8efe9' : '#fff',
+                                color: sizes.shirtSize === s ? '#184a2c' : '#475569',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                outline: 'none'
+                              }}
+                            >
+                              {s}
+                            </button>
+                          );
+                        }
+                        const currentQty = parseInt(multiSizes[s]) || 0;
+                        return (
+                          <div key={s} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: currentQty > 0 ? '#e8efe9' : '#fff', padding: '8px 12px', borderRadius: '12px', border: currentQty > 0 ? '2px solid #184a2c' : '1px solid #cbd5e1', width: '100%', maxWidth: '200px' }}>
+                            <span style={{ fontWeight: 'bold', color: currentQty > 0 ? '#184a2c' : '#1e293b' }}>{s}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', background: '#f1f5f9', borderRadius: '8px', padding: '4px' }}>
+                              <button onClick={() => setMultiSizes(p => ({...p, [s]: Math.max(0, currentQty - 1)}))} style={{ width: '30px', height: '30px', border: 'none', background: '#fff', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', color: '#64748b' }}>-</button>
+                              <input 
+                                type="number"
+                                min="0"
+                                value={multiSizes[s] !== undefined ? multiSizes[s] : 0}
+                                onChange={(e) => {
+                                  const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                                  setMultiSizes(p => ({...p, [s]: val}));
+                                }}
+                                onBlur={() => {
+                                  if (multiSizes[s] === '' || isNaN(multiSizes[s]) || multiSizes[s] < 0) {
+                                    setMultiSizes(p => ({...p, [s]: 0}));
+                                  }
+                                }}
+                                style={{ width: '35px', textAlign: 'center', fontWeight: 'bold', border: 'none', background: 'transparent', outline: 'none' }}
+                              />
+                              <button onClick={() => setMultiSizes(p => ({...p, [s]: currentQty + 1}))} style={{ width: '30px', height: '30px', border: 'none', background: '#fff', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', color: '#10b981' }}>+</button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -290,25 +367,54 @@ export default function ProductDetailView({ product, onBack }) {
                       {reqShirt ? 'Pantalón / Falda / Inferior' : 'Talla Única'}
                     </label>
                     <div className="notranslate" translate="no" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                      {(getProductSizes(product) || defaultPantsSizes).map(s => (
-                        <button
-                          key={s}
-                          onClick={() => setSizes({...sizes, pantsSize: s})}
-                          style={{
-                            padding: '10px 16px',
-                            borderRadius: '10px',
-                            border: sizes.pantsSize === s ? '2px solid #184a2c' : '1px solid #cbd5e1',
-                            background: sizes.pantsSize === s ? '#e8efe9' : '#fff',
-                            color: sizes.pantsSize === s ? '#184a2c' : '#475569',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            outline: 'none'
-                          }}
-                        >
-                          {s}
-                        </button>
-                      ))}
+                      {(getProductSizes(product) || defaultPantsSizes).map(s => {
+                        if (!isMultiSize) {
+                          return (
+                            <button
+                              key={s}
+                              onClick={() => setSizes({...sizes, pantsSize: s})}
+                              style={{
+                                padding: '10px 16px',
+                                borderRadius: '10px',
+                                border: sizes.pantsSize === s ? '2px solid #184a2c' : '1px solid #cbd5e1',
+                                background: sizes.pantsSize === s ? '#e8efe9' : '#fff',
+                                color: sizes.pantsSize === s ? '#184a2c' : '#475569',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s',
+                                outline: 'none'
+                              }}
+                            >
+                              {s}
+                            </button>
+                          );
+                        }
+                        const currentQty = parseInt(multiSizes[s]) || 0;
+                        return (
+                          <div key={s} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: currentQty > 0 ? '#e8efe9' : '#fff', padding: '8px 12px', borderRadius: '12px', border: currentQty > 0 ? '2px solid #184a2c' : '1px solid #cbd5e1', width: '100%', maxWidth: '200px' }}>
+                            <span style={{ fontWeight: 'bold', color: currentQty > 0 ? '#184a2c' : '#1e293b' }}>{s}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', background: '#f1f5f9', borderRadius: '8px', padding: '4px' }}>
+                              <button onClick={() => setMultiSizes(p => ({...p, [s]: Math.max(0, currentQty - 1)}))} style={{ width: '30px', height: '30px', border: 'none', background: '#fff', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', color: '#64748b' }}>-</button>
+                              <input 
+                                type="number"
+                                min="0"
+                                value={multiSizes[s] !== undefined ? multiSizes[s] : 0}
+                                onChange={(e) => {
+                                  const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                                  setMultiSizes(p => ({...p, [s]: val}));
+                                }}
+                                onBlur={() => {
+                                  if (multiSizes[s] === '' || isNaN(multiSizes[s]) || multiSizes[s] < 0) {
+                                    setMultiSizes(p => ({...p, [s]: 0}));
+                                  }
+                                }}
+                                style={{ width: '35px', textAlign: 'center', fontWeight: 'bold', border: 'none', background: 'transparent', outline: 'none' }}
+                              />
+                              <button onClick={() => setMultiSizes(p => ({...p, [s]: currentQty + 1}))} style={{ width: '30px', height: '30px', border: 'none', background: '#fff', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', color: '#10b981' }}>+</button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
@@ -325,76 +431,106 @@ export default function ProductDetailView({ product, onBack }) {
               border: '1px solid #c7d2fe' 
             }}>
               <h4 style={{ margin: '0 0 4px 0', color: '#3730a3', fontSize: '1rem' }}>Datos para el Bordado</h4>
-              <p style={{ margin: '0 0 12px 0', color: '#4f46e5', fontSize: '0.85rem' }}>Obligatorio para cada unidad.</p>
+              <p style={{ margin: '0 0 12px 0', color: '#4f46e5', fontSize: '0.85rem' }}>
+                {(!needsNameAndRH && needsClub) ? 'Aplica para todas las unidades.' : 'Obligatorio para cada unidad.'}
+              </p>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '6px', paddingBottom: '4px' }}>
-                <AnimatePresence>
-                  {Array.from({ length: qty }).map((_, i) => (
-                    <motion.div 
-                      key={`custom-detail-${i}`}
-                      initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9, height: 0, marginTop: 0, marginBottom: 0, overflow: 'hidden' }}
-                      transition={{ duration: 0.2 }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff', padding: '12px 10px', borderRadius: '10px', border: '1px solid #a5b4fc', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' }}
-                    >
-                      <span style={{ fontWeight: '900', color: '#312e81', fontSize: '1rem', minWidth: '20px' }}>{i + 1}.</span>
-                      
-                      {needsNameAndRH && (
-                        <>
+                {(!needsNameAndRH && needsClub) ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff', padding: '12px 10px', borderRadius: '10px', border: '1px solid #a5b4fc', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' }}>
+                    <span style={{ fontWeight: '900', color: '#312e81', fontSize: '1rem', minWidth: '20px' }}>*</span>
+                    <input 
+                      type="text" 
+                      placeholder="Nombre a bordar (Campo o Club) *" 
+                      value={customDetails[0]?.club || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomDetails(prev => prev.map(d => ({ ...d, club: val })));
+                      }}
+                      style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.95rem' }}
+                    />
+                  </div>
+                ) : (
+                  <AnimatePresence>
+                    {Array.from({ length: qty }).map((_, i) => (
+                      <motion.div 
+                        key={`custom-detail-${i}`}
+                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9, height: 0, marginTop: 0, marginBottom: 0, overflow: 'hidden' }}
+                        transition={{ duration: 0.2 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#fff', padding: '12px 10px', borderRadius: '10px', border: '1px solid #a5b4fc', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' }}
+                      >
+                        <span style={{ fontWeight: '900', color: '#312e81', fontSize: '1rem', minWidth: '20px' }}>{i + 1}.</span>
+                        
+                        {needsNameAndRH && (
+                          <>
+                            <input 
+                              type="text" 
+                              placeholder="Nombre *" 
+                              value={customDetails[i]?.name || ''}
+                              onChange={(e) => updateCustomDetail(i, 'name', e.target.value)}
+                              style={{ flex: 2, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.95rem' }}
+                            />
+                            <input 
+                              type="text" 
+                              placeholder="RH *" 
+                              value={customDetails[i]?.rh || ''}
+                              onChange={(e) => updateCustomDetail(i, 'rh', e.target.value)}
+                              style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.95rem', minWidth: '70px' }}
+                            />
+                          </>
+                        )}
+                        
+                        {needsClub && (
                           <input 
                             type="text" 
-                            placeholder="Nombre *" 
-                            value={customDetails[i]?.name || ''}
-                            onChange={(e) => updateCustomDetail(i, 'name', e.target.value)}
-                            style={{ flex: 2, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.95rem' }}
+                            placeholder="Nombre a bordar (Campo o Club) *" 
+                            value={customDetails[i]?.club || ''}
+                            onChange={(e) => updateCustomDetail(i, 'club', e.target.value)}
+                            style={{ flex: needsNameAndRH ? 1.5 : 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.95rem' }}
                           />
-                          <input 
-                            type="text" 
-                            placeholder="RH *" 
-                            value={customDetails[i]?.rh || ''}
-                            onChange={(e) => updateCustomDetail(i, 'rh', e.target.value)}
-                            style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.95rem', minWidth: '70px' }}
-                          />
-                        </>
-                      )}
-                      
-                      {needsClub && (
-                        <input 
-                          type="text" 
-                          placeholder="Nombre a bordar (Campo o Club) *" 
-                          value={customDetails[i]?.club || ''}
-                          onChange={(e) => updateCustomDetail(i, 'club', e.target.value)}
-                          style={{ flex: needsNameAndRH ? 1.5 : 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.95rem' }}
-                        />
-                      )}
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                        )}
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                )}
               </div>
             </div>
           )}
 
           <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              background: '#f1f5f9', 
-              borderRadius: '16px', 
-              padding: '6px' 
-            }}>
-              <button 
-                onClick={() => setQty(Math.max(1, qty - 1))} 
-                style={{ width: '50px', height: '50px', border: 'none', background: '#fff', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.4rem', color: '#64748b', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}
-              >-</button>
-              <span style={{ width: '60px', textAlign: 'center', fontWeight: 'bold', fontSize: '1.2rem', color: '#1e293b' }}>
-                {qty}
-              </span>
-              <button 
-                onClick={() => setQty(qty + 1)} 
-                style={{ width: '50px', height: '50px', border: 'none', background: '#fff', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.4rem', color: '#10b981', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}
-              >+</button>
-            </div>
+            {!isMultiSize && (
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                background: '#f1f5f9', 
+                borderRadius: '16px', 
+                padding: '6px' 
+              }}>
+                <button 
+                  onClick={() => setQty(Math.max(1, qty - 1))} 
+                  style={{ width: '50px', height: '50px', border: 'none', background: '#fff', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.4rem', color: '#64748b', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}
+                >-</button>
+                <input
+                  type="number"
+                  min="1"
+                  value={qty}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setQty(val === '' ? '' : parseInt(val, 10));
+                  }}
+                  onBlur={() => {
+                    if (qty === '' || isNaN(qty) || qty < 1) setQty(1);
+                  }}
+                  style={{ width: '60px', textAlign: 'center', fontWeight: 'bold', fontSize: '1.2rem', color: '#1e293b', border: 'none', background: 'transparent', outline: 'none' }}
+                />
+                <button 
+                  onClick={() => setQty(qty + 1)} 
+                  style={{ width: '50px', height: '50px', border: 'none', background: '#fff', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.4rem', color: '#10b981', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}
+                >+</button>
+              </div>
+            )}
             
             <button 
               onClick={handleAddToCart}

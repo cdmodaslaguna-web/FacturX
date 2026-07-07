@@ -305,9 +305,19 @@ export default function ProductDetailModal({ product, onClose }) {
                   onClick={() => setModalQty(Math.max(1, modalQty - 1))} 
                   style={{ width: '44px', height: '44px', border: 'none', background: '#fff', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.4rem', color: '#64748b', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}
                 >-</button>
-                <span style={{ width: '50px', textAlign: 'center', fontWeight: 'bold', fontSize: '1.2rem', color: '#1e293b' }}>
-                  {modalQty}
-                </span>
+                <input
+                  type="number"
+                  min="1"
+                  value={modalQty}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setModalQty(val === '' ? '' : parseInt(val, 10));
+                  }}
+                  onBlur={() => {
+                    if (modalQty === '' || isNaN(modalQty) || modalQty < 1) setModalQty(1);
+                  }}
+                  style={{ width: '50px', textAlign: 'center', fontWeight: 'bold', fontSize: '1.2rem', color: '#1e293b', border: 'none', background: 'transparent', outline: 'none' }}
+                />
                 <button 
                   onClick={() => setModalQty(modalQty + 1)} 
                   style={{ width: '44px', height: '44px', border: 'none', background: '#fff', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1.4rem', color: '#10b981', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}

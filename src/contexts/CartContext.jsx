@@ -37,29 +37,31 @@ export const CartProvider = ({ children }) => {
   }, [isCartOpen]);
 
   const addToCart = (product, qty, sizes = { shirtSize: '', pantsSize: '', customDetails: [] }) => {
-    const hasCustomDetails = sizes.customDetails && sizes.customDetails.length > 0;
-    
-    // Si tiene detalles personalizados, NO lo agrupamos, lo añadimos como ítem nuevo
-    const existingIndex = hasCustomDetails ? -1 : cart.findIndex(item => 
-      item.product.id === product.id && 
-      item.shirtSize === sizes.shirtSize && 
-      item.pantsSize === sizes.pantsSize
-    );
+    setCart(prevCart => {
+      const hasCustomDetails = sizes.customDetails && sizes.customDetails.length > 0;
+      
+      // Si tiene detalles personalizados, NO lo agrupamos, lo añadimos como ítem nuevo
+      const existingIndex = hasCustomDetails ? -1 : prevCart.findIndex(item => 
+        item.product.id === product.id && 
+        item.shirtSize === sizes.shirtSize && 
+        item.pantsSize === sizes.pantsSize
+      );
 
-    if (existingIndex >= 0) {
-      const newCart = [...cart];
-      newCart[existingIndex].qty += qty;
-      setCart(newCart);
-    } else {
-      setCart([...cart, {
-        cartItemId: Date.now().toString(36),
-        product: product,
-        qty: qty,
-        shirtSize: sizes.shirtSize,
-        pantsSize: sizes.pantsSize,
-        customDetails: sizes.customDetails || []
-      }]);
-    }
+      if (existingIndex >= 0) {
+        const newCart = [...prevCart];
+        newCart[existingIndex] = { ...newCart[existingIndex], qty: newCart[existingIndex].qty + qty };
+        return newCart;
+      } else {
+        return [...prevCart, {
+          cartItemId: Date.now().toString(36) + '-' + Math.random().toString(36).substr(2, 5),
+          product: product,
+          qty: qty,
+          shirtSize: sizes.shirtSize,
+          pantsSize: sizes.pantsSize,
+          customDetails: sizes.customDetails || []
+        }];
+      }
+    });
   };
 
   const removeFromCart = (cartItemId) => {

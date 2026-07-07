@@ -84,16 +84,31 @@ export default function OrderList({ ordersState }) {
     const totalConEnvio = numTotal + (hasShipping ? numShipping : 0);
     const balance = totalConEnvio - numAdvance;
 
-    let text = `*NUEVO PEDIDO RECIBIDO*\n*Casa de Modas Esperanza Laguna*\n\n¡Hola! Hemos recibido tu pedido con éxito por un valor de *${formatPrice(numTotal)}*.`;
+    const clientName = order.customer_name ? order.customer_name.trim().split(' ')[0] : 'Cliente';
+
+    let text = `*NUEVO PEDIDO RECIBIDO*\n*Casa de Modas Esperanza Laguna*\n\n`;
+    text += `¡Hola *${clientName}*!\nHemos recibido tu pedido con éxito por un valor de *${formatPrice(numTotal)}*.\n`;
+    
     if (hasShipping && numShipping > 0) {
-      text += `\nMás costo de envío: *${formatPrice(numShipping)}*.\n*Total a Pagar:* ${formatPrice(totalConEnvio)}.`;
+      text += `\nCosto de envío: *${formatPrice(numShipping)}*`;
+      text += `\n*Total a Pagar:* ${formatPrice(totalConEnvio)}\n`;
     }
-    text += `\n\nPara proceder con la confección, te solicitamos amablemente realizar un abono por el valor de *${formatPrice(numAdvance)}*.`;
-    text += `\nEl saldo pendiente será de *${formatPrice(balance)}*.`;
     
-    text += `\n\n*Puedes realizar tu pago de forma segura aquí:*\n ${window.location.origin}/pagar?amount=${numAdvance}&ref=${order.id}\n\n`;
+    text += `\nPara proceder con la confección de tus prendas, te solicitamos amablemente realizar un abono por el valor de:\n`;
+    text += `*${formatPrice(numAdvance)}*\n`;
+    text += `\n_El saldo pendiente será de *${formatPrice(balance)}*_.\n`;
     
-    text += `O si prefieres, también recibimos transferencias a:\n- *Nequi*: 3215028653\n- *Bancolombia*: (Ingresa tu # de cuenta)\n\n_El pago se encuentra sujeto a verificación. ¡Quedamos muy atentos!_`;
+    const displayOrigin = window.location.origin.includes('localhost') || window.location.origin.includes('192.168') 
+      ? 'https://esperanzalaguna.com' 
+      : window.location.origin;
+
+    text += `\n*Puedes realizar tu pago de forma segura aquí:*\n${displayOrigin}/pagar?amount=${numAdvance}&ref=${order.id}\n\n`;
+    
+    text += `O si prefieres, también recibimos transferencias a:\n`;
+    text += `- *Nequi*: 3215028653\n`;
+    text += `- *Bancolombia*: (Ingresa tu # de cuenta)\n\n`;
+    
+    text += `_El pago se encuentra sujeto a verificación. ¡Quedamos muy atentos!_`;
     
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
     
