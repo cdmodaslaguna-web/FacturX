@@ -75,6 +75,7 @@ export default function OrderTableRow({ order, hasInvoice, actions, invoices, is
     onPrintTicket,
     onRequestAdvance,
     onNotifyReady,
+    onCopyReceiptImage,
   } = actions;
 
   const showSendReceipt = (order.status === 'confirmed' || hasInvoice) && order.customer_phone;
@@ -286,8 +287,11 @@ export default function OrderTableRow({ order, hasInvoice, actions, invoices, is
                         {(subMenu === 'sendReceipt_form' || subMenu === 'print_form') ? (
                           <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
                             <div style={{ display: 'flex', gap: '10px' }}>
-                              <button onClick={() => setSubMenu(null)} style={{ flex: 1, padding: '10px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
-                                Cancelar
+                              <button 
+                                onClick={() => { onCopyReceiptImage(order, amount, format, hasShipping, shippingCost, paymentMethod); closeMenu(); }} 
+                                style={{ flex: 1, padding: '10px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                Solo Copiar
                               </button>
                               {subMenu === 'print_form' && (
                                 <button 

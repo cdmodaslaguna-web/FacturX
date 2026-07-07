@@ -15,10 +15,10 @@ import Footer from '../public/Footer';
 export default function PublicCatalog() {
   const { products, loading } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState('Todos');
+  const [selectedCategory, setSelectedCategory] = useState('TODOS');
 
   // Filter products based on category
-  const filteredProducts = selectedCategory === 'Todos' 
+  const filteredProducts = selectedCategory === 'TODOS' 
     ? products 
     : products.filter(p => p.category === selectedCategory);
 

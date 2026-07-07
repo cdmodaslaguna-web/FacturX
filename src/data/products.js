@@ -8,6 +8,8 @@ export const CATEGORIES = [
   { id: 'AV',  label: 'Aventureros' },
   { id: 'PN',  label: 'Persona Natural' },
   { id: 'INS', label: 'Insignias' },
+  { id: 'RC',  label: 'Ropa Casual' },
+  { id: 'IGL', label: 'Iglesia' },
 ]
 
 export const BASE_PRODUCTS = [

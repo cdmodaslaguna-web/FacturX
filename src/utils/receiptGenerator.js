@@ -13,11 +13,20 @@ const formatPrice = (price) => {
 };
 
 export const generateTicketCanvas = async (data, amountPaid, format, hasShipping, shippingCost, title = "Comprobante de Anticipo") => {
+  console.log("DEBUG: generateTicketCanvas running. Data total:", data.total, "Type:", typeof data.total);
   // data can be an order or an invoice
   const customerName = data.customer_name || data.clientName || 'Mostrador';
-  const total = data.total || 0;
-  const totalConEnvio = total + (hasShipping ? shippingCost : 0);
-  const balance = totalConEnvio - amountPaid;
+  
+  // Ensure we strictly use numbers to prevent string concatenation bugs like "140000" + 0 = "1400000"
+  const total = Number(data.total) || 0;
+  const numShippingCost = Number(shippingCost) || 0;
+  const numAmountPaid = Number(amountPaid) || 0;
+  
+  const totalConEnvio = total + (hasShipping ? numShippingCost : 0);
+  const balance = totalConEnvio - numAmountPaid;
+  
+  console.log("DEBUG: Calculated totalConEnvio:", totalConEnvio, "Balance:", balance);
+  
   const date = new Date(data.created_at || data.date || Date.now()).toLocaleString();
   const docId = data.id || data.orderId || 'S/N';
   const items = data.items || [];
@@ -37,12 +46,17 @@ export const generateTicketCanvas = async (data, amountPaid, format, hasShipping
   const logoSrc = new URL(log2, window.location.origin).href;
   const footerSrc = new URL(by2, window.location.origin).href;
 
-  const itemsHtml = items.map(item => `
-    <tr>
-      <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; font-size: ${isCarta ? '1rem' : '0.85rem'};">${item.qty}x ${item.name || item.description}</td>
-      <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; text-align: right; font-size: ${isCarta ? '1rem' : '0.85rem'};">${formatPrice((item.price || item.unitPrice) * item.qty)}</td>
-    </tr>
-  `).join('');
+  const itemsHtml = items.map(item => {
+    const itemName = item.product?.name || item.name || item.description || 'Producto';
+    const itemPrice = item.product?.price || item.price || item.unitPrice || 0;
+    const itemQty = Number(item.qty) || 1;
+    return `
+      <tr>
+        <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; font-size: ${isCarta ? '1rem' : '0.85rem'};">${itemQty}x ${itemName}</td>
+        <td style="padding: 6px 0; border-bottom: 1px dashed #ccc; text-align: right; font-size: ${isCarta ? '1rem' : '0.85rem'};">${formatPrice(Number(itemPrice) * itemQty)}</td>
+      </tr>
+    `;
+  }).join('');
 
   const shippingHtml = hasShipping ? `
     <tr>
@@ -140,6 +154,24 @@ export const generateTicketCanvas = async (data, amountPaid, format, hasShipping
     console.error(err);
     return null;
   }
+};
+
+export const doCopyReceiptImage = async (data, amountPaid, format, hasShipping, shippingCost, title = "Comprobante de Anticipo") => {
+  const canvas = await generateTicketCanvas(data, amountPaid, format, hasShipping, shippingCost, title);
+  if (!canvas) {
+    toast.error("Hubo un error al generar la imagen.");
+    return;
+  }
+  canvas.toBlob((blob) => {
+    if (blob) {
+      navigator.clipboard.write([new window.ClipboardItem({ 'image/png': blob })])
+        .then(() => toast.success("¡Imagen copiada al portapapeles!"))
+        .catch(err => {
+          toast.error("Error al copiar al portapapeles.");
+          console.error(err);
+        });
+    }
+  }, 'image/png');
 };
 
 export const doDownloadReceiptImage = async (data, amountPaid, format, hasShipping, shippingCost, title = "Comprobante de Anticipo") => {

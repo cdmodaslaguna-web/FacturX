@@ -1,17 +1,9 @@
 import { motion } from 'framer-motion';
-
-const CATEGORIES = [
-  'Todos',
-  'Conquistadores',
-  'Aventureros',
-  'Guias Mayores',
-  'Ropa Casual',
-  'Insignias',
-  'Iglesia'
-];
-
+import { CATEGORIES } from '../../data/products';
 
 export default function CategoryFilter({ selectedCategory, onSelectCategory }) {
+  const displayCategories = [{ id: 'TODOS', label: 'Todos' }, ...CATEGORIES];
+
   return (
     <div style={{
       maxWidth: '1200px',
@@ -30,12 +22,12 @@ export default function CategoryFilter({ selectedCategory, onSelectCategory }) {
         }
       `}</style>
 
-      {CATEGORIES.map(category => {
-        const isSelected = selectedCategory === category;
+      {displayCategories.map(cat => {
+        const isSelected = selectedCategory === cat.id;
         return (
           <motion.button
-            key={category}
-            onClick={() => onSelectCategory(category)}
+            key={cat.id}
+            onClick={() => onSelectCategory(cat.id)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             style={{
@@ -51,7 +43,7 @@ export default function CategoryFilter({ selectedCategory, onSelectCategory }) {
               transition: 'background 0.2s, color 0.2s, border 0.2s'
             }}
           >
-            {category}
+            {cat.label}
           </motion.button>
         );
       })}

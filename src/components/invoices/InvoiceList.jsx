@@ -28,8 +28,8 @@ export default function InvoiceList({ invoices, onSelect, onAddPayment }) {
   
   const fileInputRef = useRef(null)
 
-  const totalOwed = invoices.reduce((sum, inv) => sum + (inv.total || 0), 0)
-  const totalPaid = invoices.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0)
+  const totalOwed = invoices.reduce((sum, inv) => sum + (Number(inv.total) || 0), 0)
+  const totalPaid = invoices.reduce((sum, inv) => sum + (Number(inv.amountPaid) || 0), 0)
   const totalPending = totalOwed - totalPaid
 
   async function handleReceiptUpload(e) {
@@ -150,7 +150,7 @@ export default function InvoiceList({ invoices, onSelect, onAddPayment }) {
     validOrders.forEach(o => {
       const d = new Date(o.created_at);
       const monthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      monthly[monthStr] = (monthly[monthStr] || 0) + o.total;
+      monthly[monthStr] = (monthly[monthStr] || 0) + (Number(o.total) || 0);
     });
     return Object.entries(monthly)
       .sort(([a], [b]) => a.localeCompare(b))

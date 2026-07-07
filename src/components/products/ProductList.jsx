@@ -6,8 +6,8 @@ export default function ProductList({ productsState }) {
   const { products, addProduct, updateProduct, deleteProduct, resetToBase } = productsState
   const confirm = useConfirm()
   const [editingId, setEditingId] = useState(null)
-  const [form, setForm] = useState({ name: '', variant: '', category: 'PN', price: '', imagePreview: '', description: '', photoUrl: '' })
-  const [imageFile, setImageFile] = useState(null)
+  const [form, setForm] = useState({ name: '', variant: '', isVariantInfo: false, category: 'PN', price: '', imagePreviews: [], description: '', photoUrl: '' })
+  const [imageFiles, setImageFiles] = useState([])
   const [isUploading, setIsUploading] = useState(false)
   const [selectedIds, setSelectedIds] = useState([])
   const fileInputRef = useRef(null)
@@ -16,19 +16,36 @@ export default function ProductList({ productsState }) {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
+  function handleCategoryToggle(catId) {
+    let currentCats = form.category ? form.category.split(',') : [];
+    if (currentCats.includes(catId)) {
+      currentCats = currentCats.filter(id => id !== catId);
+    } else {
+      currentCats.push(catId);
+    }
+    if (currentCats.length === 0) currentCats = ['PN']; // default fallback
+    handleChange('category', currentCats.join(','));
+  }
+
   // --- Lógica de Manejo de Imagen ---
   function handleImageUpload(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
 
-    setImageFile(file)
+    setImageFiles(files)
     
-    // Generar preview local
-    const reader = new FileReader()
-    reader.onload = (event) => {
-      handleChange('imagePreview', event.target.result)
-    }
-    reader.readAsDataURL(file)
+    // Generar previews locales
+    const previews = []
+    files.forEach(file => {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        previews.push(event.target.result)
+        if (previews.length === files.length) {
+          handleChange('imagePreviews', previews)
+        }
+      }
+      reader.readAsDataURL(file)
+    })
   }
 
   async function handleSubmit(e) {
@@ -36,9 +53,13 @@ export default function ProductList({ productsState }) {
     setIsUploading(true)
     
     try {
+      const finalVariant = form.isVariantInfo && form.variant 
+        ? `[INFO]${form.variant.replace(/^\[INFO\]/, '')}` 
+        : form.variant.replace(/^\[INFO\]/, '');
+
       const productData = {
         name: form.name,
-        variant: form.variant,
+        variant: finalVariant,
         category: form.category,
         price: form.price === '' ? null : Number(form.price),
         description: form.description,
@@ -46,14 +67,14 @@ export default function ProductList({ productsState }) {
       }
 
       if (editingId) {
-        await updateProduct(editingId, productData, imageFile)
+        await updateProduct(editingId, productData, imageFiles)
         setEditingId(null)
       } else {
-        await addProduct(productData, imageFile)
+        await addProduct(productData, imageFiles)
       }
       
-      setForm({ name: '', variant: '', category: 'PN', price: '', imagePreview: '', description: '', photoUrl: '' })
-      setImageFile(null)
+      setForm({ name: '', variant: '', isVariantInfo: false, category: 'PN', price: '', imagePreviews: [], description: '', photoUrl: '' })
+      setImageFiles([])
       if (fileInputRef.current) fileInputRef.current.value = ''
     } catch (error) {
       alert("Ocurrió un error al guardar el producto:\n" + error.message)
@@ -64,16 +85,21 @@ export default function ProductList({ productsState }) {
 
   function handleEdit(product) {
     setEditingId(product.id)
+    const isInfo = product.variant?.startsWith('[INFO]');
+    const rawVariant = product.variant ? product.variant.replace(/^\[INFO\]/, '') : '';
+    const existingPhotos = product.photoUrl ? product.photoUrl.split(',') : [];
+
     setForm({
       name: product.name || '',
-      variant: product.variant || '',
+      variant: rawVariant,
+      isVariantInfo: isInfo,
       category: product.category || 'PN',
       price: product.price === null ? '' : product.price,
-      imagePreview: product.photoUrl || '',
+      imagePreviews: existingPhotos,
       photoUrl: product.photoUrl || '',
       description: product.description || ''
     })
-    setImageFile(null)
+    setImageFiles([])
   }
 
   async function handleDelete(id) {
@@ -117,8 +143,8 @@ export default function ProductList({ productsState }) {
 
   function handleCancel() {
     setEditingId(null)
-    setForm({ name: '', variant: '', category: 'PN', price: '', imagePreview: '', description: '', photoUrl: '' })
-    setImageFile(null)
+    setForm({ name: '', variant: '', isVariantInfo: false, category: 'PN', price: '', imagePreviews: [], description: '', photoUrl: '' })
+    setImageFiles([])
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -151,32 +177,57 @@ export default function ProductList({ productsState }) {
           <div className="form-group">
             <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Variante o Talla</label>
             <input value={form.variant} onChange={e => handleChange('variant', e.target.value)} placeholder="Ej. S, M, L" style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
+            <label style={{ fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', cursor: 'pointer' }}>
+              <input type="checkbox" checked={form.isVariantInfo} onChange={e => handleChange('isVariantInfo', e.target.checked)} style={{ accentColor: '#184a2c', width: 'auto', margin: 0 }} />
+              Solo informativa (no requiere selección)
+            </label>
           </div>
         </div>
-        <div className="product-form-row">
-          <div className="form-group">
-            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Categoría</label>
-            <select value={form.category} onChange={e => handleChange('category', e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }}>
-              {CATEGORIES.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.label}</option>
-              ))}
-            </select>
+
+        <div className="form-group" style={{ marginBottom: '16px' }}>
+          <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Categorías (Multi-selección)</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {CATEGORIES.map(cat => {
+              const isSelected = form.category && form.category.split(',').includes(cat.id);
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => handleCategoryToggle(cat.id)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: isSelected ? '2px solid #184a2c' : '1px solid #cbd5e1',
+                    background: isSelected ? '#e8efe9' : '#fff',
+                    color: isSelected ? '#184a2c' : '#64748b',
+                    fontSize: '0.85rem',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {cat.label}
+                </button>
+              )
+            })}
           </div>
+        </div>
+
+        <div className="product-form-row">
           <div className="form-group">
             <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Precio</label>
             <input type="number" min="0" step="0.01" value={form.price} onChange={e => handleChange('price', e.target.value)} placeholder="Opcional (Ej. 15000)" style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', outline: 'none' }} />
           </div>
           <div className="form-group">
-            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Foto</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageUpload} style={{ display: 'none' }} />
+            <label style={{ fontSize: '0.85rem', color: '#4b5563', marginBottom: '6px', display: 'block', fontWeight: '600' }}>Fotos</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <input type="file" accept="image/*" multiple ref={fileInputRef} onChange={handleImageUpload} style={{ display: 'none' }} />
               <button type="button" onClick={() => fileInputRef.current?.click()} style={{ background: '#f1f5f9', color: '#3b82f6', border: 'none', borderRadius: '12px', padding: '10px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold' }} disabled={isUploading}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
-                {isUploading ? 'Procesando...' : 'Subir Foto'}
+                {isUploading ? 'Procesando...' : 'Subir Fotos'}
               </button>
-              {form.imagePreview && (
-                <img src={form.imagePreview} alt="Preview" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }} />
-              )}
+              {form.imagePreviews && form.imagePreviews.map((preview, i) => (
+                <img key={i} src={preview} alt="Preview" style={{ width: '40px', height: '40px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }} />
+              ))}
             </div>
           </div>
         </div>
@@ -226,14 +277,22 @@ export default function ProductList({ productsState }) {
                 </td>
                 <td style={{ width: '50px' }}>
                   {product.photoUrl ? (
-                    <img src={product.photoUrl} alt="Img" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover' }} />
+                    <img src={product.photoUrl.split(',')[0]} alt="Img" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover' }} />
                   ) : (
                     <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
                     </div>
                   )}
                 </td>
-                <td>{CATEGORIES.find(c => c.id === product.category)?.label || product.category}</td>
+                <td>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                    {(product.category || '').split(',').map(catId => (
+                      <span key={catId} style={{ background: '#e2e8f0', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                        {CATEGORIES.find(c => c.id === catId)?.label || catId}
+                      </span>
+                    ))}
+                  </div>
+                </td>
                 <td>{product.name}</td>
                 <td>{product.variant || '-'}</td>
                 <td>{product.price !== null ? `$${product.price.toLocaleString('es-CO')}` : 'Variable'}</td>

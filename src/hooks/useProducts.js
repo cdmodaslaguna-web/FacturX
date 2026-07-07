@@ -29,12 +29,13 @@ export function useProducts() {
     setLoading(false)
   }
 
-  async function addProduct(product, imageFile = null) {
+  async function addProduct(product, imageFiles = []) {
     try {
       let finalPhotoUrl = product.photoUrl || null;
 
-      if (imageFile) {
-        finalPhotoUrl = await uploadImageToCloudinary(imageFile);
+      if (imageFiles && imageFiles.length > 0) {
+        const urls = await Promise.all(imageFiles.map(f => uploadImageToCloudinary(f)));
+        finalPhotoUrl = urls.join(',');
       }
 
       const newProduct = {
@@ -64,12 +65,13 @@ export function useProducts() {
     }
   }
 
-  async function updateProduct(id, updates, imageFile = null) {
+  async function updateProduct(id, updates, imageFiles = []) {
     try {
       let finalPhotoUrl = updates.photoUrl;
 
-      if (imageFile) {
-        finalPhotoUrl = await uploadImageToCloudinary(imageFile);
+      if (imageFiles && imageFiles.length > 0) {
+        const urls = await Promise.all(imageFiles.map(f => uploadImageToCloudinary(f)));
+        finalPhotoUrl = urls.join(',');
       }
 
       const cleanUpdates = {

@@ -12,6 +12,8 @@ export default function ProductDetailView({ product, onBack }) {
   const [sizes, setSizes] = useState({ shirtSize: '', pantsSize: '' });
   const [qty, setQty] = useState(1);
   const [customDetails, setCustomDetails] = useState([{ name: '', rh: '', club: '' }]);
+  const photos = product?.photoUrl ? product.photoUrl.split(',') : [];
+  const [mainPhotoIndex, setMainPhotoIndex] = useState(0);
 
   // Auto scroll to details when mounting
   useEffect(() => {
@@ -41,8 +43,11 @@ export default function ProductDetailView({ product, onBack }) {
     });
   }, [qty]);
 
+  const isVariantInfo = product?.variant?.startsWith('[INFO]') || false;
+  const displayVariant = product?.variant ? product.variant.replace(/^\[INFO\]/, '') : '';
+
   const needsPantsSize = (prod) => {
-    if (!prod) return false;
+    if (!prod || isVariantInfo) return false;
     const name = prod.name.toLowerCase();
     if (name.includes('uniforme')) return true;
     const bottoms = ['pantalon', 'pantalón', 'falda', 'sudadera', 'short', 'pantaloneta'];
@@ -50,7 +55,7 @@ export default function ProductDetailView({ product, onBack }) {
   };
 
   const needsShirtSize = (prod) => {
-    if (!prod) return false;
+    if (!prod || isVariantInfo) return false;
     const name = prod.name.toLowerCase();
     if (name.includes('uniforme')) return true;
     const tops = ['camisa', 'chaqueta', 'buzo', 'polo', 'sueter', 'suéter', 'camiseta', 'chaleco'];
@@ -61,8 +66,8 @@ export default function ProductDetailView({ product, onBack }) {
   };
 
   const getProductSizes = (prod) => {
-    if (!prod || !prod.variant) return null;
-    const parts = prod.variant.split(',').map(s => s.trim()).filter(Boolean);
+    if (!prod || !displayVariant || isVariantInfo) return null;
+    const parts = displayVariant.split(',').map(s => s.trim()).filter(Boolean);
     if (parts.length > 1) return parts; 
     return null;
   };
@@ -74,7 +79,12 @@ export default function ProductDetailView({ product, onBack }) {
   const reqPants = needsPantsSize(product);
   
   const needsNameAndRH = product ? product.name.toLowerCase().includes('nombre') : false;
-  const needsClub = product ? (product.name.toLowerCase().includes('medialuna') || product.name.toLowerCase().includes('media luna')) : false;
+  const needsClub = product ? (
+    product.name.toLowerCase().includes('medialuna') || 
+    product.name.toLowerCase().includes('media luna') ||
+    product.name.toLowerCase().includes('insignia') ||
+    product.name.toLowerCase().includes('emblema')
+  ) : false;
 
   const isSizeValid = (!reqShirt || sizes.shirtSize) && (!reqPants || sizes.pantsSize);
   
@@ -100,7 +110,8 @@ export default function ProductDetailView({ product, onBack }) {
       return;
     }
 
-    addToCart(product, qty, { ...sizes, customDetails });
+    const detailsToPass = (needsNameAndRH || needsClub) ? customDetails : [];
+    addToCart(product, qty, { ...sizes, customDetails: detailsToPass });
     onBack();
   };
 
@@ -166,20 +177,46 @@ export default function ProductDetailView({ product, onBack }) {
         boxShadow: '0 10px 30px rgba(0,0,0,0.05)'
       }}>
         
-        {/* Imagen */}
-        <div style={{ borderRadius: '16px', overflow: 'hidden', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-          {product.photoUrl ? (
-            <img 
-              src={product.photoUrl} 
-              alt={product.name} 
-              style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: '500px' }} 
-            />
-          ) : (
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <circle cx="8.5" cy="8.5" r="1.5"></circle>
-              <polyline points="21 15 16 10 5 21"></polyline>
-            </svg>
+        {/* Imagen y Galería */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ borderRadius: '16px', overflow: 'hidden', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+            {photos.length > 0 ? (
+              <img 
+                src={photos[mainPhotoIndex]} 
+                alt={product.name} 
+                style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: '500px' }} 
+              />
+            ) : (
+              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+            )}
+          </div>
+          
+          {photos.length > 1 && (
+            <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {photos.map((photo, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setMainPhotoIndex(idx)}
+                  style={{
+                    padding: 0,
+                    border: mainPhotoIndex === idx ? '2px solid #184a2c' : '2px solid transparent',
+                    borderRadius: '8px',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    width: '60px',
+                    height: '60px',
+                    flexShrink: 0,
+                    overflow: 'hidden'
+                  }}
+                >
+                  <img src={photo} alt={`${product.name} ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
@@ -188,6 +225,12 @@ export default function ProductDetailView({ product, onBack }) {
           <h1 style={{ margin: '0 0 10px 0', fontSize: '2.5rem', color: '#1e293b', fontWeight: '900', lineHeight: '1.2' }}>
             {product.name}
           </h1>
+
+          {displayVariant && (
+            <div style={{ display: 'inline-block', background: '#e0e7ff', color: '#3730a3', padding: '6px 12px', borderRadius: '8px', fontSize: '1rem', fontWeight: 'bold', marginBottom: '15px', width: 'fit-content' }}>
+              Variante: {displayVariant}
+            </div>
+          )}
           
           <div style={{ fontSize: '2rem', fontWeight: '900', color: '#184a2c', marginBottom: '24px' }}>
             {formatPrice(product.price)}
@@ -319,7 +362,7 @@ export default function ProductDetailView({ product, onBack }) {
                       {needsClub && (
                         <input 
                           type="text" 
-                          placeholder="Nombre del Club *" 
+                          placeholder="Nombre a bordar (Campo o Club) *" 
                           value={customDetails[i]?.club || ''}
                           onChange={(e) => updateCustomDetail(i, 'club', e.target.value)}
                           style={{ flex: needsNameAndRH ? 1.5 : 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1', outline: 'none', fontSize: '0.95rem' }}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useOrders } from '../../hooks/useOrders';
 import { useInvoices } from '../../hooks/useInvoices';
 import { useConfirm } from '../../contexts/ConfirmContext';
-import { doDownloadReceiptImage, doSendReceiptViaWhatsApp, doPrintAdvanceTicket } from '../../utils/receiptGenerator';
+import { doDownloadReceiptImage, doSendReceiptViaWhatsApp, doPrintAdvanceTicket, doCopyReceiptImage } from '../../utils/receiptGenerator';
 import toast from 'react-hot-toast';
 
 import OrderTable from './OrderTable';
@@ -77,17 +77,21 @@ export default function OrderList({ ordersState }) {
       phone = '57' + phone;
     }
 
-    const totalConEnvio = order.total + (hasShipping ? shippingCost : 0);
-    const balance = totalConEnvio - advanceAmount;
+    const numTotal = Number(order.total) || 0;
+    const numShipping = Number(shippingCost) || 0;
+    const numAdvance = Number(advanceAmount) || 0;
 
-    let text = `🛍️ *NUEVO PEDIDO RECIBIDO*\n*Casa de Modas Esperanza Laguna*\n\n¡Hola! Hemos recibido tu pedido con éxito por un valor de *${formatPrice(order.total)}*.`;
-    if (hasShipping && shippingCost > 0) {
-      text += `\nMás costo de envío: *${formatPrice(shippingCost)}*.\n*Total a Pagar:* ${formatPrice(totalConEnvio)}.`;
+    const totalConEnvio = numTotal + (hasShipping ? numShipping : 0);
+    const balance = totalConEnvio - numAdvance;
+
+    let text = `*NUEVO PEDIDO RECIBIDO*\n*Casa de Modas Esperanza Laguna*\n\n¡Hola! Hemos recibido tu pedido con éxito por un valor de *${formatPrice(numTotal)}*.`;
+    if (hasShipping && numShipping > 0) {
+      text += `\nMás costo de envío: *${formatPrice(numShipping)}*.\n*Total a Pagar:* ${formatPrice(totalConEnvio)}.`;
     }
-    text += `\n\nPara proceder con la confección, te solicitamos amablemente realizar un abono por el valor de *${formatPrice(advanceAmount)}*.`;
+    text += `\n\nPara proceder con la confección, te solicitamos amablemente realizar un abono por el valor de *${formatPrice(numAdvance)}*.`;
     text += `\nEl saldo pendiente será de *${formatPrice(balance)}*.`;
     
-    text += `\n\n💳 *Puedes realizar tu pago de forma segura aquí:*\n👉 ${window.location.origin}/pagar?amount=${advanceAmount}&ref=${order.id}\n\n`;
+    text += `\n\n*Puedes realizar tu pago de forma segura aquí:*\n ${window.location.origin}/pagar?amount=${numAdvance}&ref=${order.id}\n\n`;
     
     text += `O si prefieres, también recibimos transferencias a:\n- *Nequi*: 3215028653\n- *Bancolombia*: (Ingresa tu # de cuenta)\n\n_El pago se encuentra sujeto a verificación. ¡Quedamos muy atentos!_`;
     
@@ -123,6 +127,10 @@ export default function OrderList({ ordersState }) {
       } else {
         doSendReceiptViaWhatsApp(order, amount, format, hasShipping, shippingCost);
       }
+    },
+    onCopyReceiptImage: (order, amount, format, hasShipping, shippingCost, paymentMethod) => {
+      registerInvoiceFromOrder(order, amount, paymentMethod, hasShipping, shippingCost);
+      doCopyReceiptImage(order, amount, format, hasShipping, shippingCost);
     },
     onPrintTicket: (order, amount, format, hasShipping, shippingCost, paymentMethod) => {
       registerInvoiceFromOrder(order, amount, paymentMethod, hasShipping, shippingCost);
@@ -161,6 +169,7 @@ export default function OrderList({ ordersState }) {
           updateOrderStatus={updateOrderStatus}
           onNotifyReady={notifyReadyViaWhatsApp}
           actions={actions}
+          invoices={invoices}
         />
       </div>
     </div>
