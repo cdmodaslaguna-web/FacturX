@@ -62,7 +62,8 @@ export function AuthProvider({ children }) {
         payload.pin = username; // username parameter actually receives the pin in this case
       }
 
-      const response = await fetch(`http://${window.location.hostname}:3000/auth/login`, {
+      const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

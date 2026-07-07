@@ -42,7 +42,8 @@ export default function App() {
 
     if (!isAuthenticated) return;
 
-    const socket = io(`http://${window.location.hostname}:3000`);
+    const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
+    const socket = io(API_URL);
 
     socket.on('new_order', (newOrder) => {
       // Reproducir sonido
@@ -117,7 +118,8 @@ export default function App() {
         status: 'confirmed'
       }
       
-      fetch(`http://${window.location.hostname}:3000/orders`, {
+      const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
+      fetch(`${API_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData)

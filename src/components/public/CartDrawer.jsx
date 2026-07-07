@@ -158,7 +158,8 @@ export default function CartDrawer() {
     };
 
     try {
-      const response = await fetch(`http://${window.location.hostname}:3000/orders`, {
+      const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
+      const response = await fetch(`${API_URL}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData)

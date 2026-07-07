@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { uploadImageToCloudinary } from '../utils/cloudinary'
 
-const API_URL = `http://${window.location.hostname}:3000`;
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
 
 export function useProducts() {
   const [products, setProducts] = useState([])
