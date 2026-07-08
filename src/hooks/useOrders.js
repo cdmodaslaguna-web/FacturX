@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { io } from 'socket.io-client'
+import { socket, connectSocket } from '../utils/socketManager'
 
 const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
 
@@ -10,10 +10,10 @@ export function useOrders() {
   useEffect(() => {
     fetchOrders()
 
-    const token = sessionStorage.getItem('facturx_token');
-    const socket = io(API_URL, {
-      auth: { token }
-    });
+    connectSocket();
+
+    socket.off('new_order');
+    socket.off('order_status_changed');
 
     socket.on('new_order', (newOrder) => {
       setOrders(prev => {
@@ -28,7 +28,8 @@ export function useOrders() {
     });
 
     return () => {
-      socket.disconnect()
+      socket.off('new_order');
+      socket.off('order_status_changed');
     }
   }, [])
 

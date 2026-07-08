@@ -12,7 +12,7 @@ import { useConfirm } from './contexts/ConfirmContext'
 import { useAuth } from './contexts/AuthContext'
 import useSound from 'use-sound'
 import toast, { Toaster } from 'react-hot-toast'
-import { io } from 'socket.io-client'
+import { socket, connectSocket, disconnectSocket } from './utils/socketManager'
 import LoginScreen from './components/auth/LoginScreen'
 import ChangePasswordScreen from './components/auth/ChangePasswordScreen'
 import PublicCatalog from './components/products/PublicCatalog'
@@ -43,8 +43,11 @@ export default function App() {
     if (!isAuthenticated) return;
 
     const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
-    const token = sessionStorage.getItem('facturx_token');
-    const socket = io(API_URL, { auth: { token } });
+    
+    connectSocket();
+
+    // Limpiamos los listeners antes de agregarlos para evitar duplicados
+    socket.off('new_order');
 
     socket.on('new_order', (newOrder) => {
       // Reproducir sonido
@@ -72,7 +75,8 @@ export default function App() {
     });
 
     return () => {
-      socket.disconnect();
+      socket.off('new_order');
+      // No desconectamos el socket completo aquí para evitar el error de conexión interrumpida en StrictMode
     }
   }, [isAuthenticated, playAlert]);
 
