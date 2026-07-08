@@ -2,16 +2,16 @@
 import { createContext, useState, useContext, useEffect } from 'react'
 
 const AuthContext = createContext()
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
 
-const DEFAULT_ADMIN = {
-  id: 'u1',
-  name: 'Carlos Miranda',
-  role: 'DIRECTOR DE OPERACIONES',
-  username: 'admin',
-  pin: '1234',
-  photoUrl: 'https://ui-avatars.com/api/?name=Carlos+Miranda&background=10b981&color=fff',
-  mustChangePassword: false
-}
+// Helper para headers autenticados
+const getAuthHeaders = () => {
+  const token = sessionStorage.getItem('facturx_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+  };
+};
 
 export function AuthProvider({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -20,49 +20,40 @@ export function AuthProvider({ children }) {
   const [users, setUsers] = useState([])
 
   useEffect(() => {
-    // Load users or init default admin
-    const storedUsers = localStorage.getItem('facturx_users')
-    let usersList = []
-    if (storedUsers) {
-      usersList = JSON.parse(storedUsers)
-      setUsers(usersList)
-    } else {
-      usersList = [DEFAULT_ADMIN]
-      setUsers(usersList)
-      localStorage.setItem('facturx_users', JSON.stringify(usersList))
-    }
-
-    // Check if we have a remembered user
+    // Recuperar usuario recordado del último login
     const savedRememberedUser = localStorage.getItem('facturx_remembered_user')
     if (savedRememberedUser) {
-      setRememberedUser(JSON.parse(savedRememberedUser))
+      try { setRememberedUser(JSON.parse(savedRememberedUser)) } catch {}
     }
 
-    // Restore active session if exists
-    const activeSessionId = sessionStorage.getItem('facturx_session') || localStorage.getItem('facturx_session')
-    if (activeSessionId) {
-      const activeUser = usersList.find(u => u.id === activeSessionId)
-      if (activeUser) {
-        setCurrentUser(activeUser)
+    // Restaurar sesión activa desde sessionStorage (se limpia al cerrar pestaña)
+    const token = sessionStorage.getItem('facturx_token')
+    const savedUser = sessionStorage.getItem('facturx_user')
+    if (token && savedUser) {
+      try {
+        setCurrentUser(JSON.parse(savedUser))
         setIsAuthenticated(true)
-      }
+      } catch {}
     }
   }, [])
 
-  const saveUsers = (newUsers) => {
-    setUsers(newUsers)
-    localStorage.setItem('facturx_users', JSON.stringify(newUsers))
-  }
+  // Cargar lista de usuarios desde el backend cuando el admin está autenticado
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetch(`${API_URL}/users`, { headers: getAuthHeaders() })
+        .then(res => res.ok ? res.json() : [])
+        .then(data => setUsers(Array.isArray(data) ? data : []))
+        .catch(() => setUsers([]))
+    }
+  }, [isAuthenticated])
 
   const login = async (username, pin, isPinOnly = false) => {
     try {
       let payload = { username, pin };
       if (isPinOnly && rememberedUser) {
-        payload.username = rememberedUser.username;
-        payload.pin = username; // username parameter actually receives the pin in this case
+        payload = { username: rememberedUser.username, pin: username };
       }
 
-      const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -72,10 +63,11 @@ export function AuthProvider({ children }) {
       if (response.ok) {
         const data = await response.json();
         const foundUser = data.user;
-        
+
         setCurrentUser(foundUser)
         setIsAuthenticated(true)
-        
+
+        // Recordar usuario (sin pin, sin datos sensibles)
         const rememberObj = {
           username: foundUser.username,
           name: foundUser.name,
@@ -84,8 +76,11 @@ export function AuthProvider({ children }) {
         }
         setRememberedUser(rememberObj)
         localStorage.setItem('facturx_remembered_user', JSON.stringify(rememberObj))
-        
-        localStorage.setItem('facturx_session', foundUser.id)
+
+        // Token en sessionStorage (más seguro que localStorage — se borra al cerrar pestaña)
+        sessionStorage.setItem('facturx_token', data.access_token)
+        sessionStorage.setItem('facturx_user', JSON.stringify(foundUser))
+
         return true;
       }
       return false;
@@ -98,8 +93,10 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setIsAuthenticated(false)
     setCurrentUser(null)
-    localStorage.removeItem('facturx_session')
-    sessionStorage.removeItem('facturx_session')
+    setUsers([])
+    sessionStorage.removeItem('facturx_token')
+    sessionStorage.removeItem('facturx_user')
+    // localStorage solo guarda el "recuerda quién soy" — no el token
   }
 
   const clearRememberedUser = () => {
@@ -107,69 +104,90 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('facturx_remembered_user')
   }
 
-  const createUser = (firstName, lastName, role) => {
+  const createUser = async (firstName, lastName, role) => {
     const username = `${firstName.toLowerCase().trim()}.${lastName.toLowerCase().trim()}`
-    const newUser = {
-      id: Date.now().toString(),
-      name: `${firstName} ${lastName}`,
-      role: role || 'EMPLEADO',
-      username: username,
-      pin: '123456', // Default password/pin
-      photoUrl: `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=0f172a&color=fff`,
-      mustChangePassword: true
+    const defaultPin = '123456'
+    try {
+      const res = await fetch(`${API_URL}/users`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          name: `${firstName} ${lastName}`,
+          username,
+          pin: defaultPin,
+          role: role || 'EMPLEADO',
+        })
+      })
+      if (!res.ok) throw new Error('Error creando usuario')
+      const newUser = await res.json()
+      setUsers(prev => [...prev, newUser])
+      return { ...newUser, tempPin: defaultPin }
+    } catch (err) {
+      console.error('Error creating user:', err)
+      return null
     }
-    saveUsers([...users, newUser])
-    return newUser
   }
 
-  const updatePassword = (newPassword) => {
+  const updateUserDetails = async (id, newRole, newName, newPhotoUrl) => {
+    try {
+      const res = await fetch(`${API_URL}/users/${id}`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ role: newRole, name: newName, photourl: newPhotoUrl })
+      })
+      if (!res.ok) throw new Error('Error actualizando usuario')
+      const updated = await res.json()
+      setUsers(prev => prev.map(u => u.id === id ? updated : u))
+      if (currentUser?.id === id) setCurrentUser(updated)
+    } catch (err) {
+      console.error('Error updating user:', err)
+    }
+  }
+
+  const deleteUser = async (id) => {
+    try {
+      await fetch(`${API_URL}/users/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
+      setUsers(prev => prev.filter(u => u.id !== id))
+    } catch (err) {
+      console.error('Error deleting user:', err)
+    }
+  }
+
+  const resetUserPassword = async (id) => {
+    try {
+      await fetch(`${API_URL}/users/${id}/reset-pin`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ newPin: '123456' })
+      })
+    } catch (err) {
+      console.error('Error resetting pin:', err)
+    }
+  }
+
+  const updatePassword = async (newPassword) => {
     if (!currentUser) return
-    
-    const updatedUsers = users.map(u => {
-      if (u.id === currentUser.id) {
-        return { ...u, pin: newPassword, mustChangePassword: false }
-      }
-      return u
-    })
-    
-    saveUsers(updatedUsers)
-    setCurrentUser({ ...currentUser, pin: newPassword, mustChangePassword: false })
-  }
-
-  const deleteUser = (id) => {
-    saveUsers(users.filter(u => u.id !== id))
-  }
-
-  const updateUserDetails = (id, newRole, newName, newPhotoUrl) => {
-    const updatedUsers = users.map(u => {
-      if (u.id === id) {
-        return { ...u, role: newRole, name: newName, photoUrl: newPhotoUrl || u.photoUrl }
-      }
-      return u
-    })
-    saveUsers(updatedUsers)
-    if (currentUser?.id === id) {
-      setCurrentUser(updatedUsers.find(u => u.id === id))
+    try {
+      await fetch(`${API_URL}/users/${currentUser.id}/reset-pin`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ newPin: newPassword })
+      })
+      const updatedUser = { ...currentUser, mustChangePassword: false }
+      setCurrentUser(updatedUser)
+      sessionStorage.setItem('facturx_user', JSON.stringify(updatedUser))
+    } catch (err) {
+      console.error('Error updating password:', err)
     }
-  }
-
-  const resetUserPassword = (id) => {
-    const updatedUsers = users.map(u => {
-      if (u.id === id) {
-        return { ...u, pin: '123456', mustChangePassword: true }
-      }
-      return u
-    })
-    saveUsers(updatedUsers)
   }
 
   return (
-    <AuthContext.Provider value={{ 
-      isAuthenticated, 
+    <AuthContext.Provider value={{
+      isAuthenticated,
       rememberedUser,
-      currentUser, 
+      currentUser,
       users,
-      login, 
+      login,
       logout,
       clearRememberedUser,
       createUser,

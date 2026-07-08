@@ -1,132 +1,162 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
-const STORAGE_KEY = 'facturx_invoices'
-const COUNTER_KEY = 'facturx_invoice_counter'
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
 
-function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
-}
-
-function loadInvoices() {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY)
-    return data ? JSON.parse(data) : []
-  } catch {
-    return []
-  }
-}
-
-function getNextNumber() {
-  try {
-    const current = parseInt(localStorage.getItem(COUNTER_KEY) || '0', 10)
-    const next = current + 1
-    localStorage.setItem(COUNTER_KEY, String(next))
-    return `F-${String(next).padStart(4, '0')}`
-  } catch {
-    return `F-${Date.now()}`
-  }
-}
+const getHeaders = () => {
+  const token = sessionStorage.getItem('facturx_token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+};
 
 export function useInvoices() {
-  const [invoices, setInvoices] = useState(loadInvoices)
+  const [invoices, setInvoices] = useState([])
   const [editingInvoice, setEditingInvoice] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(invoices))
-  }, [invoices])
+  const fetchInvoices = useCallback(async (pageNumber = 1) => {
+    setLoading(true)
+    try {
+      const res = await fetch(`${API_URL}/invoices?page=${pageNumber}&limit=20`, {
+        headers: getHeaders()
+      })
+      if (!res.ok) throw new Error('Error fetching invoices')
+      const result = await res.json()
+      const newData = result.data || []
 
-  useEffect(() => {
-    const handleStorageChange = (e) => {
-      if (e.key === STORAGE_KEY) {
-        try {
-          const newData = e.newValue ? JSON.parse(e.newValue) : []
-          setInvoices(newData)
-        } catch (err) {
-          console.error("Error parsing invoices from storage", err)
-        }
+      if (pageNumber === 1) {
+        setInvoices(newData)
+      } else {
+        setInvoices(prev => {
+          const unique = newData.filter(n => !prev.some(p => p.id === n.id))
+          return [...prev, ...unique]
+        })
       }
+
+      if (result.meta) {
+        setHasMore(pageNumber < result.meta.totalPages)
+        setPage(pageNumber)
+      }
+    } catch (err) {
+      console.error('Error loading invoices:', err)
+    } finally {
+      setLoading(false)
     }
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
   }, [])
 
+  useEffect(() => {
+    fetchInvoices(1)
+  }, [fetchInvoices])
+
   function peekNextNumber() {
+    // Estimado local hasta que el backend responda; el backend genera el número real
+    const lastF = invoices.find(i => i.number?.startsWith('F-'))
+    if (!lastF) return 'F-0001'
+    const match = lastF.number.match(/F-(\d+)/)
+    if (match) return `F-${String(parseInt(match[1], 10) + 1).padStart(4, '0')}`
+    return 'F-0001'
+  }
+
+  async function addInvoice(invoiceData) {
     try {
-      const current = parseInt(localStorage.getItem(COUNTER_KEY) || '0', 10)
-      return `F-${String(current + 1).padStart(4, '0')}`
-    } catch {
-      return 'F-0001'
+      const res = await fetch(`${API_URL}/invoices`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          number: invoiceData.number || undefined,
+          clientName: invoiceData.clientName || invoiceData.client || 'Cliente',
+          clientId: invoiceData.clientId || invoiceData.document,
+          clientAddress: invoiceData.clientAddress,
+          clientPhone: invoiceData.clientPhone,
+          date: invoiceData.date,
+          notes: invoiceData.notes,
+          amountPaid: invoiceData.amountPaid || 0,
+          items: (invoiceData.items || []).map(item => ({
+            description: item.description || item.name || '',
+            quantity: Number(item.quantity) || 1,
+            unitPrice: Number(item.unitPrice || item.price) || 0,
+          }))
+        })
+      })
+      if (!res.ok) throw new Error('Error creating invoice')
+      const newInvoice = await res.json()
+      setInvoices(prev => [newInvoice, ...prev])
+      return newInvoice
+    } catch (err) {
+      console.error('Error adding invoice:', err)
+      return null
     }
   }
 
-  function addInvoice(invoice) {
-    const number = invoice.number && invoice.number.trim() ? invoice.number.trim() : getNextNumber()
-    const newInvoice = { ...invoice, number, id: generateId(), createdAt: new Date().toISOString(), amountPaid: invoice.amountPaid || 0, payments: invoice.payments || [] }
-    setInvoices(prev => [newInvoice, ...prev])
-    return newInvoice
+  async function updateInvoice(id, updates) {
+    try {
+      const res = await fetch(`${API_URL}/invoices/${id}`, {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(updates)
+      })
+      if (!res.ok) throw new Error('Error updating invoice')
+      const updated = await res.json()
+      setInvoices(prev => prev.map(inv => inv.id === id ? updated : inv))
+    } catch (err) {
+      console.error('Error updating invoice:', err)
+    }
   }
 
-  function updateInvoice(id, updates) {
-    setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, ...updates } : inv))
+  async function deleteInvoice(id) {
+    try {
+      await fetch(`${API_URL}/invoices/${id}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+      })
+      setInvoices(prev => prev.filter(inv => inv.id !== id))
+    } catch (err) {
+      console.error('Error deleting invoice:', err)
+    }
   }
 
-  function deleteInvoice(id) {
-    setInvoices(prev => prev.filter(inv => inv.id !== id))
-  }
-
-  function clearAllInvoices() {
-    setInvoices([])
-    localStorage.removeItem(STORAGE_KEY)
-    localStorage.removeItem(COUNTER_KEY)
-  }
-
-  function getInvoice(id) {
-    return invoices.find(inv => inv.id === id) || null
-  }
-
-  function addPayment(id, paymentData) {
-    setInvoices(prev => prev.map(inv => {
-      if (inv.id === id) {
-        const newPayment = {
-          id: generateId(),
-          date: new Date().toISOString(),
+  async function addPayment(id, paymentData) {
+    try {
+      const res = await fetch(`${API_URL}/invoices/${id}/payment`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
           amount: Number(paymentData.amount || 0),
           method: paymentData.method || 'Efectivo',
           notes: paymentData.notes || '',
-          receiptUrl: paymentData.receiptUrl || null
-        }
-        const currentPayments = inv.payments || []
-        const newPaid = (inv.amountPaid || 0) + newPayment.amount
-        
-        return { 
-          ...inv, 
-          amountPaid: newPaid > inv.total ? inv.total : newPaid,
-          payments: [...currentPayments, newPayment]
-        }
-      }
-      return inv
-    }))
+        })
+      })
+      if (!res.ok) throw new Error('Error adding payment')
+      const updated = await res.json()
+      setInvoices(prev => prev.map(inv => inv.id === id ? updated : inv))
+    } catch (err) {
+      console.error('Error adding payment:', err)
+    }
   }
 
-  function startEdit(invoice) {
-    setEditingInvoice(invoice)
+  const loadMore = () => {
+    if (!loading && hasMore) fetchInvoices(page + 1)
   }
 
-  function clearEdit() {
-    setEditingInvoice(null)
-  }
+  function startEdit(invoice) { setEditingInvoice(invoice) }
+  function clearEdit() { setEditingInvoice(null) }
 
   return {
     invoices,
     editingInvoice,
+    loading,
+    hasMore,
     addInvoice,
     updateInvoice,
     deleteInvoice,
-    clearAllInvoices,
-    getInvoice,
     addPayment,
     startEdit,
     clearEdit,
     peekNextNumber,
+    loadMore,
+    refetch: () => fetchInvoices(1),
   }
 }

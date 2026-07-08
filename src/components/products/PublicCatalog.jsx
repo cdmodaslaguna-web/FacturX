@@ -13,7 +13,7 @@ import ContactSection from '../public/ContactSection';
 import Footer from '../public/Footer';
 
 export default function PublicCatalog() {
-  const { products, loading } = useProducts();
+  const { products, loading, hasMore, loadMore } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('TODOS');
 
@@ -22,7 +22,7 @@ export default function PublicCatalog() {
     ? products 
     : products.filter(p => p.category === selectedCategory);
 
-  if (loading) {
+  if (loading && products.length === 0) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f8fafc' }}>
         <div style={{ 
@@ -59,6 +59,9 @@ export default function PublicCatalog() {
             }} 
             selectedCategory={selectedCategory}
             onSelectCategory={setSelectedCategory}
+            hasMore={hasMore}
+            loadMore={loadMore}
+            loadingMore={loading}
           />
         ) : (
           <div id="product-detail-section">

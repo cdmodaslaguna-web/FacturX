@@ -2,28 +2,9 @@ import { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import CategoryFilter from './CategoryFilter';
 
-export default function ProductGrid({ products, onOpenModal, selectedCategory, onSelectCategory }) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
-
-  // Reset to first page when category changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory]);
-
-  const totalPages = Math.ceil(products.length / itemsPerPage);
-  
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentProducts = products.slice(startIndex, endIndex);
-
-  const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-      // Opcional: hacer scroll suave hacia arriba al cambiar de página
-      document.getElementById('catalog-section').scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+export default function ProductGrid({ products, onOpenModal, selectedCategory, onSelectCategory, hasMore, loadMore, loadingMore }) {
+  // Reset to first page when category changes is handled by the backend typically, 
+  // but since we filter locally for categories right now, we just map over all loaded products.
 
   return (
     <div 
@@ -62,83 +43,45 @@ export default function ProductGrid({ products, onOpenModal, selectedCategory, o
         gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', 
         gap: '24px' 
       }}>
-        {currentProducts.map((p, index) => (
+        {products.map((p, index) => (
           <ProductCard 
             key={p.id} 
             product={p} 
-            index={startIndex + index} 
+            index={index} 
             onOpenModal={onOpenModal} 
           />
         ))}
       </div>
       
-      {products.length === 0 && (
+      {products.length === 0 && !loadingMore && (
         <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
           No hay productos disponibles en esta categoría.
         </div>
       )}
 
-      {totalPages > 1 && (
+      {hasMore && (
         <div style={{ 
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center', 
-          gap: '8px', 
           marginTop: '40px' 
         }}>
           <button 
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
+            onClick={loadMore}
+            disabled={loadingMore}
             style={{
-              padding: '8px 16px',
+              padding: '12px 24px',
               borderRadius: '8px',
-              border: '1px solid #cbd5e1',
-              background: currentPage === 1 ? '#f1f5f9' : '#fff',
-              color: currentPage === 1 ? '#94a3b8' : '#1e293b',
-              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              border: 'none',
+              background: '#184a2c',
+              color: '#fff',
+              cursor: loadingMore ? 'not-allowed' : 'pointer',
               fontWeight: 'bold',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              opacity: loadingMore ? 0.7 : 1
             }}
           >
-            Anterior
-          </button>
-          
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-            <button
-              key={page}
-              onClick={() => handlePageChange(page)}
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '8px',
-                border: 'none',
-                background: currentPage === page ? '#184a2c' : '#f8fafc',
-                color: currentPage === page ? '#fff' : '#64748b',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                boxShadow: currentPage === page ? '0 4px 6px rgba(24, 74, 44, 0.2)' : 'none'
-              }}
-            >
-              {page}
-            </button>
-          ))}
-
-          <button 
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            style={{
-              padding: '8px 16px',
-              borderRadius: '8px',
-              border: '1px solid #cbd5e1',
-              background: currentPage === totalPages ? '#f1f5f9' : '#fff',
-              color: currentPage === totalPages ? '#94a3b8' : '#1e293b',
-              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-              fontWeight: 'bold',
-              transition: 'all 0.2s'
-            }}
-          >
-            Siguiente
+            {loadingMore ? 'Cargando...' : 'Cargar más productos'}
           </button>
         </div>
       )}

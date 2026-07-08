@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useCart } from '../../contexts/CartContext';
+import { optimizeCloudinaryUrl } from '../../utils/cloudinary';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(price);
@@ -39,7 +40,7 @@ export default function ProductCard({ product, index, onOpenModal }) {
         {/* Imagen principal o secundaria */}
         {product.photoUrl ? (
           <img 
-            src={(isHovered && product.photoUrl2) ? product.photoUrl2 : product.photoUrl} 
+            src={optimizeCloudinaryUrl((isHovered && product.photoUrl2) ? product.photoUrl2 : product.photoUrl)} 
             alt={product.name} 
             style={{ 
               width: '100%', 

@@ -83,52 +83,75 @@ export default function OrderTableRow({ order, hasInvoice, actions, invoices, is
   const showNotifyReady = order.customer_phone;
 
   return (
-    <>
-      <tr style={{ borderBottom: activeMenu ? 'none' : '1px solid #f1f5f9', cursor: 'pointer', background: isSelected ? '#f8fafc' : 'transparent' }} onClick={onSelect}>
-        <td style={{ padding: '12px', color: '#475569', fontSize: '0.9rem' }}>
+    <div 
+      className={`order-card ${isSelected ? 'selected' : ''}`}
+      onClick={onSelect}
+      style={{ 
+        background: isSelected ? '#f8fafc' : '#fff', 
+        borderRadius: '16px', 
+        border: isSelected ? '2px solid #cbd5e1' : '1px solid #e2e8f0',
+        padding: '20px', 
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+        cursor: 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+        transition: 'all 0.2s ease-in-out',
+        width: '100%',
+        boxSizing: 'border-box'
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: '500' }}>
           {new Date(order.created_at).toLocaleDateString()} {new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-        </td>
-        <td style={{ padding: '12px', fontWeight: 'bold', color: '#1e293b' }}>
-          {order.customer_name || 'Desconocido'}
-        </td>
-        <td style={{ padding: '12px', color: '#184a2c', fontWeight: 'bold' }}>
-          {formatPrice(order.total)}
-        </td>
-        <td style={{ padding: '12px' }}>
-          {getStatusBadge(order.status)}
-        </td>
-        <td style={{ padding: '12px' }}>
-          <OrderActionGroup 
-            order={order} 
-            hasInvoice={hasInvoice} 
-            actions={actions}
-            activeMenu={activeMenu}
-            onToggleMenu={toggleMenu}
-          />
-        </td>
-      </tr>
+        </span>
+        {getStatusBadge(order.status)}
+      </div>
       
-      {/* Expanded Menu Row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold' }}>Cliente</span>
+          <span style={{ fontWeight: '900', color: '#1e293b', fontSize: '1.15rem' }}>
+            {order.customer_name || 'Desconocido'}
+          </span>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <span style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold', display: 'block' }}>Total</span>
+          <span style={{ color: '#184a2c', fontWeight: '900', fontSize: '1.2rem' }}>
+            {formatPrice(order.total)}
+          </span>
+        </div>
+      </div>
+      
+      <div style={{ marginTop: '8px', paddingTop: '16px', borderTop: '1px solid #f1f5f9' }}>
+        <OrderActionGroup 
+          order={order} 
+          hasInvoice={hasInvoice} 
+          actions={actions}
+          activeMenu={activeMenu}
+          onToggleMenu={toggleMenu}
+        />
+      </div>
+
       <AnimatePresence>
         {activeMenu && (
-          <tr style={{ borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
-            <td colSpan="5" style={{ padding: 0 }}>
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                style={{ overflow: 'hidden' }}
-              >
-                
-                {!subMenu && (
-                  <div style={{ padding: '24px', display: 'flex', gap: '16px', justifyContent: 'center', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            style={{ overflow: 'hidden', margin: '0 -20px', padding: '0 20px' }}
+          >
+            
+            {!subMenu && (
+                  <div className="order-actions-container" style={{ padding: '24px', display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
                     
                     {activeMenu === 'whatsapp' && (
                       <>
                         {showRequestAdvance && (
                           <button 
+                            className="order-action-btn"
                             onClick={(e) => { e.stopPropagation(); setSubMenu('whatsapp_form'); }}
-                            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 24px', background: '#e0f2fe', color: '#0284c7', border: '1px solid #7dd3fc', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px 24px', background: '#e0f2fe', color: '#0284c7', border: '1px solid #7dd3fc', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
                             onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                             onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
                           >
@@ -138,8 +161,9 @@ export default function OrderTableRow({ order, hasInvoice, actions, invoices, is
                         )}
                         {showSendReceipt && (
                           <button 
+                            className="order-action-btn"
                             onClick={(e) => { e.stopPropagation(); setSubMenu('sendReceipt_form'); }}
-                            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 24px', background: '#fef9c3', color: '#ca8a04', border: '1px solid #fde047', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px 24px', background: '#fef9c3', color: '#ca8a04', border: '1px solid #fde047', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
                             onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                             onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
                           >
@@ -149,8 +173,9 @@ export default function OrderTableRow({ order, hasInvoice, actions, invoices, is
                         )}
                         {showNotifyReady && (
                           <button 
+                            className="order-action-btn"
                             onClick={(e) => { e.stopPropagation(); onNotifyReady(order); closeMenu(); }}
-                            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 24px', background: '#d1fae5', color: '#059669', border: '1px solid #6ee7b7', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px 24px', background: '#d1fae5', color: '#059669', border: '1px solid #6ee7b7', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
                             onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                             onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
                           >
@@ -163,8 +188,9 @@ export default function OrderTableRow({ order, hasInvoice, actions, invoices, is
                     
                     {activeMenu === 'print' && (
                       <button 
+                        className="order-action-btn"
                         onClick={(e) => { e.stopPropagation(); setSubMenu('print_form'); }}
-                        style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 24px', background: '#f3e8ff', color: '#9333ea', border: '1px solid #d8b4fe', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', padding: '12px 24px', background: '#f3e8ff', color: '#9333ea', border: '1px solid #d8b4fe', borderRadius: '12px', fontWeight: 'bold', fontSize: '1rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
                         onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
                         onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
                       >
@@ -195,9 +221,9 @@ export default function OrderTableRow({ order, hasInvoice, actions, invoices, is
                         </button>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '24px' }}>
+                      <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
                         {/* Left column: Amount and Shipping */}
-                        <div style={{ flex: 1 }}>
+                        <div style={{ flex: '1 1 250px' }}>
                           <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '0.9rem', fontWeight: 'bold' }}>Valor del Abono:</label>
                           <div style={{ position: 'relative', marginBottom: '8px' }}>
                             <span style={{ position: 'absolute', left: '12px', top: '10px', color: '#64748b', fontWeight: 'bold' }}>$</span>
@@ -247,7 +273,7 @@ export default function OrderTableRow({ order, hasInvoice, actions, invoices, is
                         </div>
 
                         {/* Right column: Methods and Format */}
-                        <div style={{ flex: 1, borderLeft: '1px solid #e2e8f0', paddingLeft: '24px' }}>
+                        <div style={{ flex: '1 1 250px' }}>
                           {(subMenu === 'print_form' || subMenu === 'sendReceipt_form') && (
                             <div style={{ marginBottom: '16px' }}>
                               <label style={{ display: 'block', marginBottom: '8px', color: '#64748b', fontSize: '0.9rem', fontWeight: 'bold' }}>Medio de Pago:</label>
@@ -285,8 +311,8 @@ export default function OrderTableRow({ order, hasInvoice, actions, invoices, is
 
                       <div style={{ marginTop: '24px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
                         {(subMenu === 'sendReceipt_form' || subMenu === 'print_form') ? (
-                          <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
-                            <div style={{ display: 'flex', gap: '10px' }}>
+                          <div style={{ display: 'flex', gap: '10px', flexDirection: 'column', width: '100%' }}>
+                            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                               <button 
                                 onClick={() => { onCopyReceiptImage(order, amount, format, hasShipping, shippingCost, paymentMethod); closeMenu(); }} 
                                 style={{ flex: 1, padding: '10px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -333,11 +359,9 @@ export default function OrderTableRow({ order, hasInvoice, actions, invoices, is
                   </motion.div>
                 )}
                 
-              </motion.div>
-            </td>
-          </tr>
+          </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }

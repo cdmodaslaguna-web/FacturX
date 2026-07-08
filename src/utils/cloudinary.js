@@ -25,3 +25,12 @@ export const uploadImageToCloudinary = async (file) => {
   const data = await res.json();
   return data.secure_url;
 };
+
+export const optimizeCloudinaryUrl = (url, width = 400) => {
+  if (!url || typeof url !== 'string') return url;
+  if (!url.includes('cloudinary.com') || !url.includes('/upload/')) return url;
+  
+  // Intercept the URL and inject transformation parameters
+  const parts = url.split('/upload/');
+  return `${parts[0]}/upload/w_${width},c_scale,f_webp,q_auto/${parts[1]}`;
+};

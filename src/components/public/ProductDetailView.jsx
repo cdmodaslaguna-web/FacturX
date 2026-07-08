@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../contexts/CartContext';
+import { optimizeCloudinaryUrl } from '../../utils/cloudinary';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(price);
@@ -213,7 +214,7 @@ export default function ProductDetailView({ product, onBack }) {
           <div style={{ borderRadius: '16px', overflow: 'hidden', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
             {photos.length > 0 ? (
               <img 
-                src={photos[mainPhotoIndex]} 
+                src={optimizeCloudinaryUrl(photos[mainPhotoIndex], 800)} 
                 alt={product.name} 
                 style={{ width: '100%', height: '100%', objectFit: 'contain', maxHeight: '500px' }} 
               />
@@ -244,7 +245,7 @@ export default function ProductDetailView({ product, onBack }) {
                     overflow: 'hidden'
                   }}
                 >
-                  <img src={photo} alt={`${product.name} ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <img src={optimizeCloudinaryUrl(photo, 200)} alt={`${product.name} ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </button>
               ))}
             </div>

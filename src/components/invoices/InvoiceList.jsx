@@ -194,7 +194,7 @@ export default function InvoiceList({ invoices, onSelect, onAddPayment }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginTop: '10px', width: '100%', boxSizing: 'border-box', justifyContent: 'center' }}>
+      <div className="invoice-charts-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px', marginTop: '10px', width: '100%', boxSizing: 'border-box', justifyContent: 'center' }}>
         
         <div style={{ background: '#fff', padding: '16px', borderRadius: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
           <h3 style={{ margin: '0 0 16px 0', color: '#184a2c', fontSize: '1.1rem', textAlign: 'center' }}>Top 5 Productos (Unidades)</h3>

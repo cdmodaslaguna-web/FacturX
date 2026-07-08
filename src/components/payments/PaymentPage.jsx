@@ -6,16 +6,41 @@ import by2 from '../../assets/logos/by 2.png';
 export default function PaymentPage() {
   const [amount, setAmount] = useState(0);
   const [reference, setReference] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [loadingAmount, setLoadingAmount] = useState(false);
+  const [amountError, setAmountError] = useState('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const amt = params.get('amount');
     const ref = params.get('ref');
-    
-    if (amt) setAmount(parseFloat(amt));
-    if (ref) setReference(ref);
+    const urlAmount = params.get('amount');
+
+    if (ref) {
+      setReference(ref);
+      // Validar el monto real desde el backend (previene manipulación de URL)
+      setLoadingAmount(true);
+      const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
+      fetch(`${API_URL}/wompi/signature?reference=${ref}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.amountInCents) {
+            setAmount(data.amountInCents / 100);
+          } else if (urlAmount) {
+            // Fallback si no se encuentra la referencia (referencia de factura local)
+            setAmount(parseFloat(urlAmount) || 0);
+          }
+        })
+        .catch(() => {
+          if (urlAmount) setAmount(parseFloat(urlAmount) || 0);
+          setAmountError('No se pudo verificar el monto en línea.');
+        })
+        .finally(() => setLoadingAmount(false));
+    } else if (urlAmount) {
+      setAmount(parseFloat(urlAmount));
+    }
   }, []);
+
 
   if (isSuccess) {
     return (
@@ -40,15 +65,35 @@ export default function PaymentPage() {
       
       <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', width: '100%', maxWidth: '400px', marginBottom: '30px', textAlign: 'center' }}>
         <h2 style={{ margin: '0 0 5px 0', color: '#64748b', fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Total a Pagar</h2>
-        <h1 style={{ margin: 0, color: '#184a2c', fontSize: '2.5rem' }}>
-          {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount)}
-        </h1>
+        {loadingAmount ? (
+          <p style={{ color: '#94a3b8' }}>Verificando monto...</p>
+        ) : (
+          <h1 style={{ margin: 0, color: '#184a2c', fontSize: '2.5rem' }}>
+            {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount)}
+          </h1>
+        )}
         {reference && <p style={{ margin: '10px 0 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>Ref: {reference}</p>}
+        {amountError && <p style={{ margin: '8px 0 0 0', color: '#d97706', fontSize: '0.8rem' }}>⚠️ {amountError}</p>}
+
+        {/* Campo de correo del cliente */}
+        <div style={{ marginTop: '16px', textAlign: 'left' }}>
+          <label style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+            Correo electrónico (para recibo de pago)
+          </label>
+          <input
+            type="email"
+            placeholder="tucorreo@ejemplo.com"
+            value={customerEmail}
+            onChange={e => setCustomerEmail(e.target.value)}
+            style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #e2e8f0', outline: 'none', fontSize: '0.95rem' }}
+          />
+        </div>
       </div>
 
       <WompiCheckout 
         amount={amount} 
-        reference={reference} 
+        reference={reference}
+        customerEmail={customerEmail}
         onSuccess={() => setIsSuccess(true)}
       />
 

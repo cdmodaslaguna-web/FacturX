@@ -32,7 +32,7 @@ export default function App() {
   const [view, setView] = useState('list') // 'list', 'form', 'products'
   const [previewInvoice, setPreviewInvoice] = useState(null)
 
-  const [playAlert] = useSound('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg', { volume: 0.5 });
+  const [playAlert] = useSound('/sounds/new-order-alert.ogg', { volume: 0.5 });
 
   useEffect(() => {
     // Solicitar permisos de notificación nativa al cargar
@@ -43,7 +43,8 @@ export default function App() {
     if (!isAuthenticated) return;
 
     const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
-    const socket = io(API_URL);
+    const token = sessionStorage.getItem('facturx_token');
+    const socket = io(API_URL, { auth: { token } });
 
     socket.on('new_order', (newOrder) => {
       // Reproducir sonido

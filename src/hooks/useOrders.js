@@ -10,7 +10,10 @@ export function useOrders() {
   useEffect(() => {
     fetchOrders()
 
-    const socket = io(API_URL);
+    const token = sessionStorage.getItem('facturx_token');
+    const socket = io(API_URL, {
+      auth: { token }
+    });
 
     socket.on('new_order', (newOrder) => {
       setOrders(prev => {
@@ -29,29 +32,64 @@ export function useOrders() {
     }
   }, [])
 
-  async function fetchOrders() {
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
+  const getHeaders = () => {
+    const token = sessionStorage.getItem('facturx_token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+  };
+
+  async function fetchOrders(pageNumber = 1, isInitial = false) {
     setLoading(true)
     try {
-      const response = await fetch(`${API_URL}/orders`);
+      const response = await fetch(`${API_URL}/orders?page=${pageNumber}&limit=20`, { headers: getHeaders() });
       if (response.ok) {
-        const data = await response.json();
-        setOrders(data);
+        const responseData = await response.json();
+        const newData = responseData.data || [];
+        
+        if (isInitial) {
+          setOrders(newData);
+        } else {
+          // Merge avoiding duplicates (since sockets might have added them)
+          setOrders(prev => {
+            const newFiltered = newData.filter(n => !prev.some(p => p.id === n.id));
+            return [...prev, ...newFiltered];
+          });
+        }
+        
+        if (responseData.meta) {
+          setHasMore(pageNumber < responseData.meta.totalPages);
+          setPage(pageNumber);
+        } else {
+          setHasMore(newData.length === 20);
+          setPage(pageNumber);
+        }
       } else {
         console.error('Error fetching orders from backend');
-        setOrders([]);
+        if (isInitial) setOrders([]);
       }
     } catch (error) {
       console.error('Network error fetching orders:', error);
-      setOrders([]);
+      if (isInitial) setOrders([]);
     }
     setLoading(false)
+  }
+
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      fetchOrders(page + 1, false);
+    }
   }
 
   async function addOrder(orderData) {
     try {
       const response = await fetch(`${API_URL}/orders`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(orderData)
       });
       if (!response.ok) throw new Error('Error creating order');
@@ -69,7 +107,7 @@ export function useOrders() {
     try {
       await fetch(`${API_URL}/orders/${id}/status`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify({ status })
       });
     } catch (error) {
@@ -80,11 +118,14 @@ export function useOrders() {
   async function deleteOrder(id) {
     setOrders(prev => prev.filter(o => o.id !== id))
     try {
-      await fetch(`${API_URL}/orders/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/orders/${id}`, { 
+        method: 'DELETE',
+        headers: getHeaders() 
+      });
     } catch (error) {
       console.error('Error deleting order:', error)
     }
   }
 
-  return { orders, addOrder, updateOrderStatus, deleteOrder, loading, fetchOrders }
+  return { orders, addOrder, updateOrderStatus, deleteOrder, loading, fetchOrders, hasMore, loadMore }
 }

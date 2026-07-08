@@ -272,10 +272,10 @@ export default function ProductList({ productsState }) {
           <tbody>
             {products.map(product => (
               <tr key={product.id}>
-                <td>
+                <td className="td-checkbox">
                   <input type="checkbox" checked={selectedIds.includes(product.id)} onChange={() => toggleSelect(product.id)} style={{ width: '16px', height: '16px', accentColor: '#184a2c' }} />
                 </td>
-                <td style={{ width: '50px' }}>
+                <td className="td-img" data-label="Imagen" style={{ width: '50px' }}>
                   {product.photoUrl ? (
                     <img src={product.photoUrl.split(',')[0]} alt="Img" style={{ width: '36px', height: '36px', borderRadius: '8px', objectFit: 'cover' }} />
                   ) : (
@@ -284,7 +284,7 @@ export default function ProductList({ productsState }) {
                     </div>
                   )}
                 </td>
-                <td>
+                <td className="td-category" data-label="Categoría">
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                     {(product.category || '').split(',').map(catId => (
                       <span key={catId} style={{ background: '#e2e8f0', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
@@ -293,10 +293,10 @@ export default function ProductList({ productsState }) {
                     ))}
                   </div>
                 </td>
-                <td>{product.name}</td>
-                <td>{product.variant || '-'}</td>
-                <td>{product.price !== null ? `$${product.price.toLocaleString('es-CO')}` : 'Variable'}</td>
-                <td className="actions-cell" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <td className="td-name" data-label="Nombre">{product.name}</td>
+                <td className="td-variant" data-label="Variante">{product.variant || '-'}</td>
+                <td className="td-price" data-label="Precio Defecto">{product.price !== null ? `$${product.price.toLocaleString('es-CO')}` : 'Variable'}</td>
+                <td className="td-actions actions-cell" data-label="Acciones" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <button className="btn-icon btn-edit" onClick={() => handleEdit(product)} title="Editar" style={{ background: '#f1f5f9', color: '#3b82f6', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', display: 'flex' }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                   </button>

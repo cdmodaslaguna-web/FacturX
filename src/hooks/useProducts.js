@@ -7,27 +7,61 @@ export function useProducts() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
 
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
   useEffect(() => {
-    fetchProducts()
+    fetchProducts(1, true);
   }, [])
 
-  async function fetchProducts() {
+  const getHeaders = () => {
+    const token = localStorage.getItem('facturx_token');
+    return {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+  };
+
+  async function fetchProducts(pageNumber = 1, isInitial = false) {
     setLoading(true)
     try {
-      const response = await fetch(`${API_URL}/products`);
+      const response = await fetch(`${API_URL}/products?page=${pageNumber}&limit=20`, { headers: getHeaders() });
       if (response.ok) {
-        const data = await response.json();
-        setProducts(data);
+        const responseData = await response.json();
+        // Backend returns { data, meta }
+        const newData = responseData.data || [];
+        
+        if (isInitial) {
+          setProducts(newData);
+        } else {
+          setProducts(prev => [...prev, ...newData]);
+        }
+        
+        if (responseData.meta) {
+          setHasMore(pageNumber < responseData.meta.totalPages);
+          setPage(pageNumber);
+        } else {
+          // Fallback if backend doesn't return meta (for some reason)
+          setHasMore(newData.length === 20);
+          setPage(pageNumber);
+        }
       } else {
         console.error('Error fetching products from backend');
-        setProducts([]);
+        if (isInitial) setProducts([]);
       }
     } catch (error) {
       console.error('Network error fetching products:', error);
-      setProducts([]);
+      if (isInitial) setProducts([]);
     }
     setLoading(false)
   }
+
+  const loadMore = () => {
+    if (!loading && hasMore) {
+      fetchProducts(page + 1, false);
+    }
+  }
+
 
   async function addProduct(product, imageFiles = []) {
     try {
@@ -49,7 +83,7 @@ export function useProducts() {
       
       const response = await fetch(`${API_URL}/products`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(newProduct)
       });
       
@@ -85,7 +119,7 @@ export function useProducts() {
 
       const response = await fetch(`${API_URL}/products/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(),
         body: JSON.stringify(cleanUpdates)
       });
       
@@ -103,7 +137,10 @@ export function useProducts() {
     setProducts(prev => prev.filter(p => p.id !== id))
     
     try {
-      await fetch(`${API_URL}/products/${id}`, { method: 'DELETE' });
+      await fetch(`${API_URL}/products/${id}`, { 
+        method: 'DELETE',
+        headers: getHeaders()
+      });
     } catch (error) {
       console.error('Error deleting product in backend:', error);
     }
@@ -118,5 +155,5 @@ export function useProducts() {
     setProducts([])
   }
 
-  return { products, addProduct, updateProduct, deleteProduct, getByCategory, resetToBase, loading }
+  return { products, addProduct, updateProduct, deleteProduct, getByCategory, resetToBase, loading, hasMore, loadMore }
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../../contexts/CartContext';
+import { optimizeCloudinaryUrl } from '../../utils/cloudinary';
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(price);
@@ -134,7 +135,7 @@ export default function ProductDetailModal({ product, onClose }) {
           <div style={{ position: 'relative', height: '300px', background: '#f1f5f9' }}>
             {product.photoUrl ? (
               <img 
-                src={product.photoUrl} 
+                src={optimizeCloudinaryUrl(product.photoUrl.split(',')[0], 500)} 
                 alt={product.name} 
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
               />

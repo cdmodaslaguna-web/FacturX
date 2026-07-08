@@ -1583,3 +1583,64 @@ legend {
     text-align: right;
   }
 }
+
+/* Custom Responsive Overrides for Orders and Invoices */
+@media (max-width: 900px) {
+  .order-list-layout {
+    flex-direction: column !important;
+  }
+  .order-table-container.has-selection {
+    display: none !important;
+  }
+  .order-detail-container {
+    display: none;
+  }
+  .order-detail-container.active {
+    display: flex !important;
+    width: 100% !important;
+  }
+  .mobile-only-btn {
+    display: flex !important;
+  }
+  .order-detail-panel {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    position: static !important;
+  }
+  .table-responsive-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+  .dashboard-stats {
+    grid-template-columns: 1fr !important;
+  }
+  .dashboard-stats .stat-card {
+    grid-column: span 1 !important;
+  }
+  .invoice-charts-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .order-actions-container {
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 16px 12px !important;
+  }
+  .order-action-btn {
+    width: 100% !important;
+    padding: 10px 16px !important;
+    font-size: 0.95rem !important;
+  }
+  .orders-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.order-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+.order-card.selected {
+  border-color: #94a3b8 !important;
+}

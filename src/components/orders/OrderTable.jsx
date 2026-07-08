@@ -1,6 +1,6 @@
 import OrderActionGroup from './actions/OrderActionGroup';
 import OrderTableRow from './OrderTableRow';
-export default function OrderTable({ orders, selectedOrder, setSelectedOrder, invoices, actions }) {
+export default function OrderTable({ orders, selectedOrder, setSelectedOrder, invoices, actions, hasMore, loadMore, loadingMore }) {
   const formatPrice = (price) => {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(price);
   };
@@ -19,20 +19,9 @@ export default function OrderTable({ orders, selectedOrder, setSelectedOrder, in
   };
 
   return (
-    <div style={{ flex: 1, background: '#fff', borderRadius: '16px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', minHeight: '400px', overflow: 'visible' }}>
-      <div style={{ flex: 1, overflow: 'visible' }}>
-        <table className="products-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #f1f5f9', color: '#64748b' }}>Fecha</th>
-              <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #f1f5f9', color: '#64748b' }}>Cliente</th>
-              <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #f1f5f9', color: '#64748b' }}>Total</th>
-              <th style={{ textAlign: 'left', padding: '12px', borderBottom: '2px solid #f1f5f9', color: '#64748b' }}>Estado</th>
-              <th style={{ textAlign: 'center', padding: '12px', borderBottom: '2px solid #f1f5f9', color: '#64748b' }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map(order => {
+    <div style={{ flex: 1, background: 'transparent', display: 'flex', flexDirection: 'column', minHeight: '400px' }}>
+      <div className="orders-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', width: '100%', alignItems: 'start' }}>
+        {orders.map(order => {
               const hasInvoice = invoices.some(inv => inv.orderId === order.id && inv.amountPaid > 0);
               
               return (
@@ -46,16 +35,34 @@ export default function OrderTable({ orders, selectedOrder, setSelectedOrder, in
                 />
               );
             })}
-            {orders.length === 0 && (
-              <tr>
-                <td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
-                  No se han recibido pedidos aún. Comparte tu catálogo público para comenzar.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        {orders.length === 0 && !loadingMore && (
+          <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#64748b', background: '#fff', borderRadius: '16px' }}>
+            No se han recibido pedidos aún. Comparte tu catálogo público para comenzar.
+          </div>
+        )}
       </div>
+
+      {hasMore && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px', paddingBottom: '20px' }}>
+          <button 
+            onClick={loadMore}
+            disabled={loadingMore}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '8px',
+              border: 'none',
+              background: '#e2e8f0',
+              color: '#334155',
+              cursor: loadingMore ? 'not-allowed' : 'pointer',
+              fontWeight: 'bold',
+              transition: 'all 0.2s',
+              opacity: loadingMore ? 0.7 : 1
+            }}
+          >
+            {loadingMore ? 'Cargando...' : 'Cargar más pedidos'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

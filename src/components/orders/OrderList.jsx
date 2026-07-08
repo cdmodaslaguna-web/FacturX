@@ -9,7 +9,7 @@ import OrderTable from './OrderTable';
 import OrderDetailPanel from './OrderDetailPanel';
 
 export default function OrderList({ ordersState }) {
-  const { orders, updateOrderStatus, deleteOrder, loading } = ordersState;
+  const { orders, updateOrderStatus, deleteOrder, loading, hasMore, loadMore } = ordersState;
   const { invoices, addInvoice } = useInvoices();
   const confirm = useConfirm();
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -162,7 +162,7 @@ export default function OrderList({ ordersState }) {
     setActiveRowAction
   };
 
-  if (loading) {
+  if (loading && orders.length === 0) {
     return <div style={{ padding: '20px', textAlign: 'center' }}>Cargando pedidos...</div>;
   }
 
@@ -170,22 +170,30 @@ export default function OrderList({ ordersState }) {
     <div style={{ background: '#e8efe9', borderRadius: '24px', padding: '24px', display: 'flex', gap: '20px', minHeight: '100%', flexDirection: 'column' }}>
       <h2 style={{ margin: 0, color: '#184a2c', fontSize: '1.6rem' }}>Pedidos Recibidos</h2>
       
-      <div style={{ display: 'flex', gap: '20px', flex: 1 }}>
-        <OrderTable 
-          orders={orders}
-          selectedOrder={selectedOrder}
-          setSelectedOrder={setSelectedOrder}
-          invoices={invoices}
-          actions={actions}
-        />
+      <div className="order-list-layout" style={{ display: 'flex', gap: '20px', flex: 1 }}>
+        <div className={`order-table-container ${selectedOrder ? 'has-selection' : ''}`} style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <OrderTable 
+            orders={orders}
+            selectedOrder={selectedOrder}
+            setSelectedOrder={setSelectedOrder}
+            invoices={invoices}
+            actions={actions}
+            hasMore={hasMore}
+            loadMore={loadMore}
+            loadingMore={loading}
+          />
+        </div>
 
-        <OrderDetailPanel 
-          selectedOrder={selectedOrder}
-          updateOrderStatus={updateOrderStatus}
-          onNotifyReady={notifyReadyViaWhatsApp}
-          actions={actions}
-          invoices={invoices}
-        />
+        <div className={`order-detail-container ${selectedOrder ? 'active' : ''}`}>
+          <OrderDetailPanel 
+            selectedOrder={selectedOrder}
+            updateOrderStatus={updateOrderStatus}
+            onNotifyReady={notifyReadyViaWhatsApp}
+            actions={actions}
+            invoices={invoices}
+            onClose={() => setSelectedOrder(null)}
+          />
+        </div>
       </div>
     </div>
   );

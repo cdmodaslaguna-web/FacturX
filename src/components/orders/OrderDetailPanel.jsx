@@ -7,11 +7,16 @@ export default function OrderDetailPanel({
   updateOrderStatus, 
   onNotifyReady, 
   actions,
-  invoices
+  invoices,
+  onClose
 }) {
   const [previewImg, setPreviewImg] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [customAmount, setCustomAmount] = useState(0);
+  const [format, setFormat] = useState('image_and_text');
+  const [hasShipping, setHasShipping] = useState(false);
+  const [shippingCost, setShippingCost] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState('Transferencia');
 
   useEffect(() => {
     if (!selectedOrder) return;
@@ -66,10 +71,15 @@ export default function OrderDetailPanel({
   };
 
   return (
-    <div style={{ width: '350px', background: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', maxHeight: '100%', overflowY: 'auto' }}>
+    <div className="order-detail-panel" style={{ width: '350px', background: '#fff', borderRadius: '16px', padding: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         <div>
-          <h3 style={{ margin: '0 0 4px 0', color: '#1e293b' }}>Detalles del Pedido</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button className="mobile-only-btn" onClick={onClose} style={{ display: 'none', background: '#f1f5f9', border: 'none', borderRadius: '50%', width: '32px', height: '32px', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            </button>
+            <h3 style={{ margin: '0 0 4px 0', color: '#1e293b' }}>Detalles del Pedido</h3>
+          </div>
           <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{new Date(selectedOrder.created_at).toLocaleString()}</span>
         </div>
         {getStatusBadge(selectedOrder.status)}
@@ -145,6 +155,62 @@ export default function OrderDetailPanel({
             />
           </div>
         </div>
+
+        <div style={{ marginTop: '16px', background: '#f1f5f9', padding: '12px', borderRadius: '8px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginBottom: hasShipping ? '12px' : '0' }}>
+            <input 
+              type="checkbox" 
+              checked={hasShipping}
+              onChange={(e) => setHasShipping(e.target.checked)}
+              style={{ accentColor: '#184a2c', width: '16px', height: '16px' }}
+            />
+            <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#1e293b' }}>Incluir Costo de Envío</span>
+          </label>
+          
+          {hasShipping && (
+            <div style={{ position: 'relative', marginBottom: '12px' }}>
+              <span style={{ position: 'absolute', left: '12px', top: '10px', color: '#64748b', fontWeight: 'bold' }}>$</span>
+              <input 
+                type="number" 
+                min="0"
+                step="1"
+                placeholder="Valor del domicilio"
+                value={shippingCost || ''} 
+                onChange={(e) => setShippingCost(parseFloat(e.target.value) || 0)}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px 10px 10px 25px', borderRadius: '8px', border: '2px solid #e2e8f0', fontSize: '1rem', outline: 'none' }}
+              />
+            </div>
+          )}
+
+          <div style={{ marginBottom: '12px' }}>
+            <label style={{ display: 'block', marginBottom: '6px', color: '#64748b', fontSize: '0.9rem', fontWeight: 'bold' }}>Medio de Pago:</label>
+            <select 
+              value={paymentMethod} 
+              onChange={e => setPaymentMethod(e.target.value)}
+              style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', outline: 'none', fontSize: '0.9rem' }}
+            >
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia Bancaria</option>
+              <option value="Tarjeta">Tarjeta (Datafono)</option>
+              <option value="Nequi/Daviplata">Nequi / Daviplata</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', color: '#64748b', fontSize: '0.9rem', fontWeight: 'bold' }}>Formato para WhatsApp:</label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                <input type="radio" checked={format === 'image_only'} onChange={() => setFormat('image_only')} style={{ accentColor: '#184a2c' }} />
+                <span style={{ fontSize: '0.85rem' }}>Solo Imagen (Comprobante)</span>
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                <input type="radio" checked={format === 'image_and_text'} onChange={() => setFormat('image_and_text')} style={{ accentColor: '#184a2c' }} />
+                <span style={{ fontSize: '0.85rem' }}>Mensaje de texto y Comprobante</span>
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
       
       <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
@@ -161,19 +227,19 @@ export default function OrderDetailPanel({
         )}
 
         {selectedOrder.status === 'confirmed' && selectedOrder.customer_phone && (
-          <button onClick={() => actions.setActiveRowAction({ orderId: selectedOrder.id, action: 'whatsapp' })} style={{ flex: 1, minWidth: '120px', padding: '12px', background: '#fef9c3', color: '#ca8a04', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <button onClick={() => { actions.onSendReceipt(selectedOrder, customAmount, format, hasShipping, shippingCost, paymentMethod); if (onClose) onClose(); }} style={{ flex: 1, minWidth: '120px', padding: '12px', background: '#fef9c3', color: '#ca8a04', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13"></path><path d="M22 2L15 22L11 13L2 9L22 2z"></path></svg>
             Enviar Comprobante
           </button>
         )}
         
-        <button onClick={() => actions.setActiveRowAction({ orderId: selectedOrder.id, action: 'print' })} style={{ flex: 1, minWidth: '120px', padding: '12px', background: '#f3e8ff', color: '#9333ea', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+        <button onClick={() => { actions.onPrintTicket(selectedOrder, customAmount, '80mm', hasShipping, shippingCost, paymentMethod); if (onClose) onClose(); }} style={{ flex: 1, minWidth: '120px', padding: '12px', background: '#f3e8ff', color: '#9333ea', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
           Ticket Abono
         </button>
 
         {selectedOrder.customer_phone && (
-          <button onClick={() => actions.setActiveRowAction({ orderId: selectedOrder.id, action: 'whatsapp' })} style={{ flex: 1, minWidth: '120px', padding: '12px', background: '#e0f2fe', color: '#0284c7', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <button onClick={() => { actions.onRequestAdvance(selectedOrder, customAmount, format, hasShipping, shippingCost, paymentMethod); if (onClose) onClose(); }} style={{ flex: 1, minWidth: '120px', padding: '12px', background: '#e0f2fe', color: '#0284c7', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
             Pedir Abono
           </button>

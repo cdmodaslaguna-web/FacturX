@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 const WOMPI_SANDBOX_URL = 'https://sandbox.wompi.co/v1';
 
-export default function WompiCheckout({ amount, reference, onSuccess, onError }) {
+export default function WompiCheckout({ amount, reference, customerEmail, onSuccess, onError }) {
   const [cardData, setCardData] = useState({
     number: '',
     cvc: '',
@@ -63,9 +63,9 @@ export default function WompiCheckout({ amount, reference, onSuccess, onError })
         },
         body: JSON.stringify({
           payment_source_id: cardToken,
-          amount_in_cents: amount * 100, // Wompi requiere montos en centavos
+          amount_in_cents: amount * 100,
           reference: reference,
-          customer_email: 'cliente@ejemplo.com' // Idealmente pasarlo como prop
+          customer_email: customerEmail || 'cliente@facturx.co'
         })
       });
 

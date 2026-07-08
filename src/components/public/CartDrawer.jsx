@@ -18,7 +18,7 @@ export default function CartDrawer() {
   const [orderSentSuccess, setOrderSentSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const businessWhatsAppNumber = "1234567890"; // Reemplazar en config
+  const businessWhatsAppNumber = import.meta.env.VITE_BUSINESS_WHATSAPP || '573000000000';
 
   const handleDownloadPDF = async () => {
     try {
