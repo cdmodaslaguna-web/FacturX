@@ -10,6 +10,8 @@ export const setupFetchInterceptor = () => {
       if (url && !url.includes('/auth/login') && !url.includes('/products') && !url.includes('/wompi') && !url.includes('/pago-link')) {
         console.warn('Token expirado o inválido. Redirigiendo a login...');
         localStorage.removeItem('facturx_token');
+        sessionStorage.removeItem('facturx_token');
+        sessionStorage.removeItem('facturx_user');
         window.location.href = '/login';
       }
     }
