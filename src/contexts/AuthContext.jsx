@@ -47,11 +47,11 @@ export function AuthProvider({ children }) {
     }
   }, [isAuthenticated])
 
-  const login = async (username, pin, isPinOnly = false) => {
+  const login = async (username, credential, isPinOnly = false) => {
     try {
-      let payload = { username, pin };
+      let payload = { username, credential, type: 'password' };
       if (isPinOnly && rememberedUser) {
-        payload = { username: rememberedUser.username, pin: username };
+        payload = { username: rememberedUser.username, credential, type: 'pin' };
       }
 
       const response = await fetch(`${API_URL}/auth/login`, {
@@ -165,19 +165,21 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const updatePassword = async (newPassword) => {
+  const updatePassword = async (newPassword, newPin) => {
     if (!currentUser) return
     try {
-      await fetch(`${API_URL}/users/${currentUser.id}/reset-pin`, {
+      const res = await fetch(`${API_URL}/users/${currentUser.id}/setup-credentials`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ newPin: newPassword })
+        body: JSON.stringify({ newPassword, newPin })
       })
-      const updatedUser = { ...currentUser, mustChangePassword: false }
+      if (!res.ok) throw new Error('Error')
+      const updatedUser = { ...currentUser, mustchangepassword: false }
       setCurrentUser(updatedUser)
       sessionStorage.setItem('facturx_user', JSON.stringify(updatedUser))
     } catch (err) {
-      console.error('Error updating password:', err)
+      console.error('Error updating credentials:', err)
+      throw err;
     }
   }
 

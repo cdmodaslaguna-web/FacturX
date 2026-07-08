@@ -20,8 +20,8 @@ export default function LoginScreen() {
     
     try {
       if (rememberedUser) {
-        const success = await login(password, null, true)
-        if (!success) setError('PIN o contraseña incorrecta')
+        const success = await login(null, password, true)
+        if (!success) setError('PIN incorrecto')
       } else {
         const success = await login(username, password, false)
         if (!success) setError('Credenciales incorrectas')
@@ -73,16 +73,18 @@ export default function LoginScreen() {
                   <p className="profile-role">{rememberedUser.role}</p>
                   
                   <div className="input-group">
-                    <label>CONTRASEÑA O PIN</label>
+                    <label>NUEVO MODO: PIN RÁPIDO</label>
                     <div className="password-input-wrapper">
                       <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                       <input 
                         type={showPassword ? "text" : "password"} 
                         value={password}
-                        onChange={e => setPassword(e.target.value)}
-                        placeholder="••••••••"
+                        onChange={e => setPassword(e.target.value.replace(/\D/g, ''))}
+                        placeholder="••••"
+                        maxLength={6}
                         required
                         disabled={isLoading}
+                        style={{ letterSpacing: '10px', textAlign: 'center' }}
                       />
                       <button type="button" className="btn-toggle-password" onClick={() => setShowPassword(!showPassword)} disabled={isLoading}>
                         {showPassword ? (
@@ -95,7 +97,7 @@ export default function LoginScreen() {
                   </div>
 
                   <button type="button" className="btn-switch-account" onClick={clearRememberedUser} disabled={isLoading}>
-                    INICIAR SESIÓN CON OTRA CUENTA
+                    INICIAR SESIÓN CON OTRA CUENTA (CLAVE)
                   </button>
                 </motion.div>
               ) : (
@@ -122,7 +124,7 @@ export default function LoginScreen() {
                   </div>
                   
                   <div className="input-group">
-                    <label>CONTRASEÑA</label>
+                    <label>CONTRASEÑA SEGURA</label>
                     <div className="password-input-wrapper">
                       <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                       <input 

@@ -19,6 +19,8 @@ import PublicCatalog from './components/products/PublicCatalog'
 import './App.css'
 import './PWA.css'
 import PaymentPage from './components/payments/PaymentPage'
+import SetupCredentialsModal from './components/auth/SetupCredentialsModal'
+import ServerWakeupLoader from './components/shared/ServerWakeupLoader'
 
 import { useProducts } from './hooks/useProducts'
 import { useOrders } from './hooks/useOrders'
@@ -173,6 +175,9 @@ export default function App() {
   return (
     <>
       <Toaster />
+      <ServerWakeupLoader />
+      <div className="app-container">
+      <SetupCredentialsModal />
       <MainLayout 
         view={view} 
         setView={setView} 
