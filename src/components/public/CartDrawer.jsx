@@ -199,7 +199,7 @@ export default function CartDrawer() {
     text += `*Aviso:* Pasaré a recoger el pedido en el negocio (Sin domicilio).%0A%0A`;
     text += `Quedo atento(a) para confirmar la prefactura. Mi nombre es ${customerInfo.name}.`;
 
-    window.open(`https://wa.me/${businessWhatsAppNumber}?text=${text}`, '_blank');
+    window.open(`https://wa.me/57${businessWhatsAppNumber}?text=${text}`, '_blank');
     handleClose();
   };
 

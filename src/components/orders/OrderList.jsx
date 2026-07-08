@@ -105,7 +105,8 @@ export default function OrderList({ ordersState }) {
     text += `\n*Puedes realizar tu pago de forma segura aquí:*\n${displayOrigin}/pagar?amount=${numAdvance}&ref=${order.id}\n\n`;
     
     text += `O si prefieres, también recibimos transferencias a:\n`;
-    text += `- *Nequi*: 3215028653\n`;
+    const businessWhatsAppNumber = import.meta.env.VITE_BUSINESS_WHATSAPP || '3215028653';
+    text += `- *Nequi*: ${businessWhatsAppNumber}\n`;
     text += `- *Bancolombia*: (Ingresa tu # de cuenta)\n\n`;
     
     text += `_El pago se encuentra sujeto a verificación. ¡Quedamos muy atentos!_`;

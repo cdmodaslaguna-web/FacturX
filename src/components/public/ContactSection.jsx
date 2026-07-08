@@ -1,5 +1,5 @@
 export default function ContactSection() {
-  const businessWhatsAppNumber = "3215028653"; // Reemplazar con config real
+  const businessWhatsAppNumber = import.meta.env.VITE_BUSINESS_WHATSAPP || "3215028653";
 
   return (
     <div style={{ background: '#f8fafc', padding: '80px 20px' }}>
@@ -32,7 +32,7 @@ export default function ContactSection() {
                 <div>
                   <h4 style={{ margin: '0 0 5px 0', color: '#1e293b' }}>WhatsApp</h4>
                   <p style={{ margin: 0, color: '#64748b' }}>+57 {businessWhatsAppNumber}</p>
-                  <a href={`https://wa.me/${businessWhatsAppNumber}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '8px', color: '#10b981', fontWeight: 'bold', textDecoration: 'none' }}>
+                  <a href={`https://wa.me/57${businessWhatsAppNumber}`} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '8px', color: '#10b981', fontWeight: 'bold', textDecoration: 'none' }}>
                     Enviar mensaje →
                   </a>
                 </div>
