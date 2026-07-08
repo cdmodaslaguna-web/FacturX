@@ -212,6 +212,7 @@ export default function App() {
       {previewInvoice && (
         <InvoicePreview invoice={previewInvoice} onClose={() => setPreviewInvoice(null)} />
       )}
+      </div>
     </>
   )
 }
