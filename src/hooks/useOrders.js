@@ -8,6 +8,12 @@ export function useOrders() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const token = sessionStorage.getItem('facturx_token');
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     fetchOrders()
 
     connectSocket();

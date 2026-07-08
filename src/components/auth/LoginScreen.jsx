@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import log2 from '../../assets/logos/log2.png'
 import heroImage from '../../assets/hero/1.png'
+import RecoveryModal from './RecoveryModal'
 import './LoginScreen.css'
 
 export default function LoginScreen() {
@@ -12,6 +13,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [showRecovery, setShowRecovery] = useState(false)
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -168,11 +170,16 @@ export default function LoginScreen() {
           </form>
 
           <div className="login-footer">
+            <button type="button" onClick={() => setShowRecovery(true)} style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', fontWeight: 'bold', marginBottom: '10px' }}>
+              ¿Olvidaste tu contraseña o PIN?
+            </button>
             <a href="/">Volver al Catálogo Público</a>
             <span>© {new Date().getFullYear()} FACTURX SYSTEM</span>
           </div>
         </div>
       </motion.div>
+      
+      {showRecovery && <RecoveryModal onClose={() => setShowRecovery(false)} />}
     </div>
   )
 }

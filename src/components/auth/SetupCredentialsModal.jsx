@@ -8,6 +8,8 @@ export default function SetupCredentialsModal() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [newPin, setNewPin] = useState('');
+  const [securityQuestion, setSecurityQuestion] = useState('');
+  const [securityAnswer, setSecurityAnswer] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,7 +42,7 @@ export default function SetupCredentialsModal() {
 
     setIsLoading(true);
     try {
-      await updatePassword(newPassword, newPin);
+      await updatePassword(newPassword, newPin, securityQuestion, securityAnswer);
     } catch (err) {
       setError('Ocurrió un error al actualizar las credenciales');
     } finally {
@@ -107,6 +109,32 @@ export default function SetupCredentialsModal() {
               placeholder="4 a 6 dígitos numéricos"
               maxLength={6}
               style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box', textAlign: 'center', letterSpacing: '10px' }}
+              required
+              disabled={isLoading}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', color: '#475569', fontSize: '0.85rem', fontWeight: 'bold' }}>PREGUNTA DE SEGURIDAD</label>
+            <select 
+              value={securityQuestion}
+              onChange={e => setSecurityQuestion(e.target.value)}
+              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box', marginBottom: '10px' }}
+              required
+              disabled={isLoading}
+            >
+              <option value="">Selecciona una pregunta...</option>
+              <option value="¿Cuál es el nombre de tu primera mascota?">¿Cuál es el nombre de tu primera mascota?</option>
+              <option value="¿En qué ciudad naciste?">¿En qué ciudad naciste?</option>
+              <option value="¿Cuál es el nombre de soltera de tu madre?">¿Cuál es el nombre de soltera de tu madre?</option>
+              <option value="¿Cuál es tu película favorita?">¿Cuál es tu película favorita?</option>
+            </select>
+            <input 
+              type="text"
+              value={securityAnswer}
+              onChange={e => setSecurityAnswer(e.target.value)}
+              placeholder="Escribe tu respuesta secreta"
+              style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #cbd5e1', fontSize: '1rem', boxSizing: 'border-box' }}
               required
               disabled={isLoading}
             />

@@ -48,6 +48,8 @@ export function useInvoices() {
   }, [])
 
   useEffect(() => {
+    const token = sessionStorage.getItem('facturx_token');
+    if (!token) return;
     fetchInvoices(1)
   }, [fetchInvoices])
 

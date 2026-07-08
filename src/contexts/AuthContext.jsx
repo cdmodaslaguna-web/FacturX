@@ -165,13 +165,13 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const updatePassword = async (newPassword, newPin) => {
+  const updatePassword = async (newPassword, newPin, securityQuestion, securityAnswer) => {
     if (!currentUser) return
     try {
       const res = await fetch(`${API_URL}/users/${currentUser.id}/setup-credentials`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ newPassword, newPin })
+        body: JSON.stringify({ newPassword, newPin, securityQuestion, securityAnswer })
       })
       if (!res.ok) throw new Error('Error')
       const updatedUser = { ...currentUser, mustchangepassword: false }

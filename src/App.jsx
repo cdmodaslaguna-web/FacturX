@@ -98,8 +98,8 @@ export default function App() {
     return <LoginScreen />
   }
 
-  if (currentUser?.mustChangePassword) {
-    return <ChangePasswordScreen />
+  if (currentUser?.mustchangepassword) {
+    // The SetupCredentialsModal handles the password change over the layout
   }
 
   function handleSubmit(invoiceData) {
