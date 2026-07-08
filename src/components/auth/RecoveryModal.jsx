@@ -56,8 +56,8 @@ export default function RecoveryModal({ onClose }) {
       sessionStorage.setItem('facturx_token', data.access_token);
       sessionStorage.setItem('facturx_user', JSON.stringify(data.user));
       
-      // Recargamos para que App.jsx capture el estado y muestre el SetupCredentialsModal
-      window.location.href = '/';
+      // Recargamos la misma página o vamos a la ruta de admin
+      window.location.reload();
     } catch (err) {
       setError(err.message);
     } finally {
