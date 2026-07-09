@@ -28,7 +28,7 @@ export default function FAQSection() {
   };
 
   return (
-    <div style={{ padding: '80px 20px', background: '#fff' }}>
+    <div id="faq-section" style={{ padding: '80px 20px', background: '#fff' }}>
       <div style={{ maxWidth: '800px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '50px' }}>
           <h2 style={{ fontSize: '2.5rem', color: '#184a2c', margin: '0 0 20px 0', fontWeight: '900' }}>Preguntas Frecuentes</h2>

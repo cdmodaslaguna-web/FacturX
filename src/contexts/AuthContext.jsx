@@ -47,11 +47,11 @@ export function AuthProvider({ children }) {
     }
   }, [isAuthenticated])
 
-  const login = async (username, credential, isPinOnly = false) => {
+  const login = async (username, credential, type = 'password') => {
     try {
-      let payload = { username, credential, type: 'password' };
-      if (isPinOnly && rememberedUser) {
-        payload = { username: rememberedUser.username, credential, type: 'pin' };
+      let payload = { username, credential, type };
+      if (!username && rememberedUser) {
+        payload.username = rememberedUser.username;
       }
 
       const response = await fetch(`${API_URL}/auth/login`, {
@@ -128,12 +128,15 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const updateUserDetails = async (id, newRole, newName, newPhotoUrl) => {
+  const updateUserDetails = async (id, newRole, newName, newPhotoUrl, newPin) => {
     try {
+      const payload = { role: newRole, name: newName, photourl: newPhotoUrl }
+      if (newPin) payload.pin = newPin
+
       const res = await fetch(`${API_URL}/users/${id}`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ role: newRole, name: newName, photourl: newPhotoUrl })
+        body: JSON.stringify(payload)
       })
       if (!res.ok) throw new Error('Error actualizando usuario')
       const updated = await res.json()

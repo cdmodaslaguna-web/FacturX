@@ -43,13 +43,9 @@ export default function ProfileSettingsModal({ onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault()
     
-    // Actualizar nombre y foto (reutilizamos updateUserDetails pasándole la foto simulada si tuvieras el campo photoUrl, pero AuthContext no guarda explícitamente foto actualizada por ahora en updateUserDetails, vamos a necesitar añadir eso o guardarlo en local storage)
-    // Para simplificar, actualizaremos el nombre y la contraseña
-    updateUserDetails(currentUser.id, currentUser.role, name, photoUrl)
-    
-    if (pin && pin !== currentUser.pin) {
-      updatePassword(pin)
-    }
+    // Actualizar nombre, foto y PIN (opcional) usando updateUserDetails
+    const newPin = (pin && pin !== currentUser.pin) ? pin : undefined;
+    updateUserDetails(currentUser.id, currentUser.role, name, photoUrl, newPin);
 
     toast.success('Perfil actualizado correctamente', { style: { background: '#184a2c', color: '#fff' } })
     onClose()

@@ -25,17 +25,16 @@ export default function CatalogHero() {
       overflow: 'hidden', 
       display: 'flex', 
       alignItems: 'center', 
-      justifyContent: 'center',
-      marginBottom: '40px'
+      justifyContent: 'center'
     }}>
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         <motion.img 
           key={currentHeroImage}
           src={heroImages[currentHeroImage]}
           initial={{ opacity: 0, scale: 1.05 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1.2 }}
+          transition={{ duration: 1.5, ease: "easeInOut" }}
           style={{ position: 'absolute', width: '100%', height: '100%', objectFit: 'cover' }}
           alt="Hero Background"
         />

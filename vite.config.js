@@ -33,6 +33,23 @@ export default defineConfig({
             type: 'image/png'
           }
         ]
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,ttf}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https?:\/\/[a-zA-Z0-9.-]+:3000\/.*/i,
+            handler: 'NetworkOnly',
+            options: {
+              backgroundSync: {
+                name: 'api-queue',
+                options: {
+                  maxRetentionTime: 24 * 60
+                }
+              }
+            }
+          }
+        ]
       }
     })
   ],

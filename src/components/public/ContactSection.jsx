@@ -2,7 +2,7 @@ export default function ContactSection() {
   const businessWhatsAppNumber = import.meta.env.VITE_BUSINESS_WHATSAPP || "3215028653";
 
   return (
-    <div style={{ background: '#f8fafc', padding: '80px 20px' }}>
+    <div id="contact-section" style={{ background: '#f8fafc', padding: '80px 20px' }}>
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '50px' }}>
           <h2 style={{ fontSize: '2.5rem', color: '#184a2c', margin: '0 0 20px 0', fontWeight: '900' }}>Contacto & Ubicación</h2>

@@ -19,7 +19,7 @@ export const setupFetchInterceptor = () => {
 
         if (isSettingUp) {
           console.warn('401 detectado, pero el usuario debe configurar credenciales. Ignorando logout forzado.');
-          return;
+          return response;
         }
 
         console.warn('Token expirado o inválido. Redirigiendo a login...');
