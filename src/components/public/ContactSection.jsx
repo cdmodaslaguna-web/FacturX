@@ -53,15 +53,15 @@ export default function ContactSection() {
           </div>
 
           <div style={{ background: '#e2e8f0', minHeight: '350px' }}>
-            {/* Mapa de Google embebido de ejemplo. Reemplazar src por el iframe real de Google Maps */}
+            {/* Mapa de Google embebido con la ubicación real */}
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3976.925575514035!2d-74.0817543!3d4.6068695!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f99a0ef30c9f1%3A0xc07ce648fc92c219!2sBogot%C3%A1%2C%20Colombia!5e0!3m2!1sen!2sus!4v1689710375990!5m2!1sen!2sus"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.2085714091827!2d-75.61053292524926!3d6.2362159937520225!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e442991c913bf19%3A0x4b5d0b7c3de203a1!2zQ2wuIDMyQiAjIDg1LTI0LCBNZWRlbGzDrW4sIEJlbMOpbiwgTWVkZWxsw61uLCBBbnRpb3F1aWE!5e0!3m2!1ses-419!2sco!4v1783557930208!5m2!1ses-419!2sco"
               width="100%"
               height="100%"
               style={{ border: 0 }}
               allowFullScreen=""
               loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
+              referrerPolicy="strict-origin-when-cross-origin"
               title="Mapa de Ubicación"
             ></iframe>
           </div>
